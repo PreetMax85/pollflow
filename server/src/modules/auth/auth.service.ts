@@ -21,7 +21,7 @@ export class AuthService {
   static async register(data: RegisterInput) {
     const existingUser = await AuthRepository.findByEmail(data.email);
     if (existingUser) {
-      throw ApiError.conflict("A user with this email already exists");
+      throw ApiError.conflict("Unable to process registration. Please try again.");
     }
 
     const hashedPassword = await bcrypt.hash(data.password, env.BCRYPT_SALT_ROUNDS);
@@ -62,11 +62,20 @@ export class AuthService {
     // 1. Verify the refresh token (throws ApiError if expired/invalid)
     const decoded = verifyRefreshToken(token);
 
-    // 2. Replay detection — if this jti is already blocklisted, the token
-    //    was already rotated (someone else used it first). Reject immediately.
-    const isReplayed = await TokenBlocklist.exists({ jti: decoded.jti });
-    if (isReplayed) {
-      throw ApiError.unauthorized("Refresh token has been revoked");
+    // 2. Atomic replay detection — attempt to blocklist first. If the jti
+    //    already exists (MongoDB unique constraint E11000), the token was
+    //    already rotated by a concurrent request. Reject immediately.
+    const oldExp = decoded.exp;
+    const expiresAt = oldExp
+      ? new Date(oldExp * 1000)
+      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    try {
+      await TokenBlocklist.create({ jti: decoded.jti, userId: decoded.userId, expiresAt });
+    } catch (err: unknown) {
+      if ((err as { code?: number })?.code === 11000) {
+        throw ApiError.unauthorized("Refresh token has been revoked");
+      }
+      throw ApiError.internal("An error occurred during token refresh");
     }
 
     // 3. Ensure user still exists in the database
@@ -74,13 +83,6 @@ export class AuthService {
     if (!user) {
       throw ApiError.unauthorized("User no longer exists");
     }
-
-    // 3. Blocklist the OLD refresh token's jti so it can only be used once
-    const oldExp = decoded.exp;
-    const expiresAt = oldExp
-      ? new Date(oldExp * 1000)
-      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await TokenBlocklist.create({ jti: decoded.jti, userId: decoded.userId, expiresAt });
 
     // 4. Token rotation: issue both new tokens
     const newAccessToken = generateAccessToken({ userId: user.id });
@@ -94,9 +96,9 @@ export class AuthService {
 
     if (!user) {
       const { rawToken } = generateResetToken();
+      console.log(`[PasswordReset] Mock email to ${data.email}: ${env.CLIENT_URL}/reset?token=${rawToken}`);
       return {
         message: "If an account with that email exists, a password reset link has been sent.",
-        mockEmailContent: `Click here to reset: ${env.CLIENT_URL}/reset?token=${rawToken}`,
       };
     }
 
@@ -104,9 +106,10 @@ export class AuthService {
 
     await AuthRepository.updateResetToken(user._id.toString(), hashedToken, resetTokenExpiresAt);
 
+    console.log(`[PasswordReset] Mock email to ${data.email}: ${env.CLIENT_URL}/reset?token=${rawToken}`);
+
     return {
       message: "If an account with that email exists, a password reset link has been sent.",
-      mockEmailContent: `Click here to reset: ${env.CLIENT_URL}/reset?token=${rawToken}`,
     };
   }
 

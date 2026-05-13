@@ -49,7 +49,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       type: String,
       required: [true, "Email is required"],
       unique: true,     // creates a unique index — duplicate email → MongoServerError code 11000
-      lowercase: true,  // always stored lowercase, matches Zod's .toLowerCase() in the DTO
+      lowercase: true,  // always stored lowercase; normalized at the DB layer
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
     },

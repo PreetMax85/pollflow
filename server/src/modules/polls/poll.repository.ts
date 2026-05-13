@@ -84,9 +84,9 @@ export class PollRepository {
   }
 
   /**
-   * Delete a poll by ID. This is a hard delete — polls have no regulatory
-   * retention requirement in this context. Responses referencing the poll
-   * will become orphaned; analytics routes should handle that gracefully.
+   * Delete a poll by ID. This is a hard delete.
+   * The service layer handles cascading deletion of associated responses
+   * before calling this — see PollService.deletePoll().
    */
   static async delete(pollId: string): Promise<boolean> {
     if (!Types.ObjectId.isValid(pollId)) return false;

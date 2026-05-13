@@ -45,7 +45,8 @@ export class AuthController {
   }
 
   static async logout(req: AuthRequest, res: Response): Promise<void> {
-    const { jti, userId, exp } = req.user!;
+    if (!req.user) throw ApiError.unauthorized("Authentication required");
+    const { jti, userId, exp } = req.user;
 
     await AuthService.logout({
       jti,
@@ -95,7 +96,7 @@ export class AuthController {
     const data = forgotPasswordSchema.parse(req.body);
     const result = await AuthService.forgotPassword(data);
 
-    ApiResponse.ok(res, result.message, { mockEmailContent: result.mockEmailContent });
+    ApiResponse.ok(res, result.message);
   }
 
   static async resetPassword(req: Request, res: Response): Promise<void> {

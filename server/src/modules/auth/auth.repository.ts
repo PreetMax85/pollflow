@@ -44,7 +44,9 @@ export class AuthRepository {
     return User.findOne({
       resetToken: hashedToken,
       resetTokenExpiresAt: { $gt: new Date() }, // token must not be expired
-    }).lean();
+    })
+      .select("-password")
+      .lean();
   }
 
   /**

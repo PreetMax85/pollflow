@@ -3,6 +3,7 @@ import { Server as SocketServer, Socket } from "socket.io";
 import { env } from "../common/config/env.js";
 import { Poll } from "../modules/polls/poll.schema.js";
 import { verifyAccessToken } from "../common/utils/jwt.js";
+import { TokenBlocklist } from "../modules/auth/token-blocklist.schema.js";
 
 interface ServerToClientEvents {
   "poll:response-count": (payload: {
@@ -74,7 +75,7 @@ let io: SocketServer<
   SocketData
 >;
 
-const PUBLIC_PREFIX = "poll:";
+const PUBLIC_PREFIX = "public:poll:";
 const ADMIN_PREFIX = "poll:admin:";
 
 export const initSocket = (
@@ -139,6 +140,13 @@ export const initSocket = (
         }
 
         const decoded = verifyAccessToken(payload.token);
+
+        const isRevoked = await TokenBlocklist.exists({ jti: decoded.jti });
+        if (isRevoked) {
+          socket.emit("room:joined", { pollId: "error", socketId: socket.id });
+          return;
+        }
+
         const pollId = payload.pollId.trim();
         const poll = await Poll.findById(pollId).select("createdBy").lean();
 

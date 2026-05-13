@@ -87,12 +87,4 @@ export class ResponseRepository {
     await Response.deleteMany({ pollId: new Types.ObjectId(pollId) });
   }
 
-  /**
-   * Get all responses for a poll — used by analytics aggregation pipeline.
-   * Returns lean documents for performance (no Mongoose document overhead).
-   */
-  static async findByPollId(pollId: string): Promise<IResponse[]> {
-    return Response.find({ pollId: new Types.ObjectId(pollId) })
-      .lean({ virtuals: true });
-  }
 }

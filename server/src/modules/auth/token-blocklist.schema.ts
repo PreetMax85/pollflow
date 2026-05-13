@@ -10,7 +10,8 @@ import mongoose, { Document, Schema } from "mongoose";
  * Why jti and not the full token?
  * - Storing the full token wastes space and is a security liability
  * - jti is a short UUID that uniquely identifies each token
- * - We only store access token jtis — refresh tokens are single-use by design
+ * - Both access and refresh token jtis are stored — refresh jtis are
+ *   blocklisted on rotation (replay protection) and on logout
  *
  * TTL index: MongoDB automatically deletes documents after `expiresAt`.
  * This prevents the collection from growing forever. A revoked token that has

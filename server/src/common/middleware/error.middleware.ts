@@ -56,7 +56,7 @@ export const errorHandler = (
 
   // 5. Mongoose CastError (invalid ObjectId in URL params)
   if (err instanceof MongooseError.CastError) {
-    res.status(400).json({ success: false, error: `Invalid ${err.path}: ${err.value}` });
+    res.status(400).json({ success: false, error: `Invalid ${err.path} format` });
     return;
   }
 

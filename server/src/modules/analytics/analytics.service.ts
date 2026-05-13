@@ -22,18 +22,19 @@ export class AnalyticsService {
    * Returns:
    * - totalResponses: total number of submissions
    * - questions[]: for each question, per-option counts and percentages
-   * - participationRate: percentage of unique authenticated respondents vs total
+   * - completionRate: percentage of required questions answered across all responses
    * - timeline: response counts grouped by day (for the trend chart)
    *
    * Pipeline stages:
    * 1. $match       — filter to this poll only
    * 2. $facet       — run multiple sub-pipelines in parallel:
-   *    a. totalCount     — count all responses
-   *    b. answerBreakdown — $unwind answers → $group by question+option → count
-   *    c. dailyTimeline  — $group by day → count (for participation trend chart)
+   *    a. totalCount       — count all responses
+   *    b. answerBreakdown  — $unwind answers → $group by question+option → count
+   *    c. questionTotals   — $unwind answers → $group by question → total (no JS reduce)
+   *    d. dailyTimeline    — $group by day → count (for participation trend chart)
    * 3. $addFields   — compute option percentages via $map + $divide + $round
    * 4. Post-processing in JS: merge question metadata (text) from the poll document
-   *    into the aggregation result. This is the ONLY thing done outside MongoDB.
+   *    into the aggregation result. Totals come from the pipeline, not from JS reduce.
    */
   static async getFullAnalytics(pollId: string, requestingUserId: string): Promise<FullAnalytics> {
     // ── Auth check: only the poll creator can see full analytics ──────────────
@@ -85,7 +86,25 @@ export class AnalyticsService {
             { $sort: { questionId: 1, count: -1 } },
           ],
 
-          // ── 2c: daily response timeline ──────────────────────────────────────
+          // ── 2c: per-question answer totals (no JS reduce) ────────────────────
+          questionTotals: [
+            { $unwind: "$answers" },
+            {
+              $group: {
+                _id: "$answers.questionId",
+                totalAnswers: { $sum: 1 },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                questionId: "$_id",
+                totalAnswers: 1,
+              },
+            },
+          ],
+
+          // ── 2d: daily response timeline ──────────────────────────────────────
           // Groups responses by calendar day for the participation trend chart.
           // $dateToString truncates the timestamp to YYYY-MM-DD.
           dailyTimeline: [
@@ -111,7 +130,7 @@ export class AnalyticsService {
             { $sort: { date: 1 } },
           ],
 
-          // ── 2d: anonymous vs identified breakdown ────────────────────────────
+          // ── 2e: anonymous vs identified breakdown ────────────────────────────
           anonymousBreakdown: [
             {
               $group: {
@@ -164,15 +183,21 @@ export class AnalyticsService {
     // $facet always returns arrays — safely extract with fallbacks
     const totalResponses: number = result?.totalCount?.[0]?.count ?? 0;
     const answerBreakdown: AnswerBreakdownRow[] = result?.answerBreakdown ?? [];
+    const questionTotals: QuestionTotalRow[] = result?.questionTotals ?? [];
     const dailyTimeline: TimelineRow[] = result?.dailyTimeline ?? [];
     const anonymousBreakdown: AnonymousRow[] = result?.anonymousBreakdown ?? [];
 
+    // Build a lookup: questionId → totalAnswers (from pipeline, not JS reduce)
+    const questionTotalMap = new Map(questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]));
+
     // ── Merge question/option text from poll document ─────────────────────────
-    // This is the only JS-side processing. We have counts by ObjectId from the
-    // pipeline — now we attach human-readable text from the poll's embedded docs.
+    // The pipeline gives us counts by ObjectId — we attach human-readable text
+    // from the poll's embedded docs. Total answers per question come from the
+    // pipeline's questionTotals facet, not from a JS reduce.
     const questions = AnalyticsService.mergeQuestionData(
       poll.questions,
       answerBreakdown,
+      questionTotalMap,
     );
 
     // ── Compute anonymous count from breakdown ────────────────────────────────
@@ -180,6 +205,8 @@ export class AnalyticsService {
     const identifiedCount = anonymousBreakdown.find((b) => b._id === false)?.count ?? 0;
 
     // ── Completion rate (required questions only) ─────────────────────────────
+    // Total answers per question come from the pipeline — only the final ratio
+    // is computed here using pre-aggregated values.
     const requiredQuestions = questions.filter((q) => q.isRequired);
     const completionRate = (() => {
       if (totalResponses === 0 || requiredQuestions.length === 0) return 100;
@@ -242,6 +269,22 @@ export class AnalyticsService {
               },
             },
           ],
+          questionTotals: [
+            { $unwind: "$answers" },
+            {
+              $group: {
+                _id: "$answers.questionId",
+                totalAnswers: { $sum: 1 },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                questionId: "$_id",
+                totalAnswers: 1,
+              },
+            },
+          ],
         },
       },
       {
@@ -284,10 +327,13 @@ export class AnalyticsService {
 
     const totalResponses: number = result?.totalCount?.[0]?.count ?? 0;
     const answerBreakdown: AnswerBreakdownRow[] = result?.answerBreakdown ?? [];
+    const questionTotals: QuestionTotalRow[] = result?.questionTotals ?? [];
+    const questionTotalMap = new Map(questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]));
 
     const questions = AnalyticsService.mergeQuestionData(
       poll.questions,
       answerBreakdown,
+      questionTotalMap,
     );
 
     return { totalResponses, questions };
@@ -332,6 +378,22 @@ export class AnalyticsService {
                 questionId: "$_id.questionId",
                 optionId: "$_id.optionId",
                 count: 1,
+              },
+            },
+          ],
+          questionTotals: [
+            { $unwind: "$answers" },
+            {
+              $group: {
+                _id: "$answers.questionId",
+                totalAnswers: { $sum: 1 },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                questionId: "$_id",
+                totalAnswers: 1,
               },
             },
           ],
@@ -389,11 +451,14 @@ export class AnalyticsService {
 
     const totalResponses: number = result?.totalCount?.[0]?.count ?? 0;
     const answerBreakdown: AnswerBreakdownRow[] = result?.answerBreakdown ?? [];
+    const questionTotals: QuestionTotalRow[] = result?.questionTotals ?? [];
     const dailyTimeline: TimelineRow[] = result?.dailyTimeline ?? [];
+    const questionTotalMap = new Map(questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]));
 
     const questions = AnalyticsService.mergeQuestionData(
       poll.questions,
       answerBreakdown,
+      questionTotalMap,
     );
 
     return {
@@ -418,8 +483,8 @@ export class AnalyticsService {
   private static mergeQuestionData(
     questions: IPollQuestion[],
     breakdown: AnswerBreakdownRow[],
+    questionTotalMap?: Map<string, number>,
   ): QuestionAnalytics[] {
-    // Build a lookup: questionId → optionId → { count, percentage }
     const countMap = new Map<string, Map<string, { count: number; percentage: number }>>();
 
     for (const row of breakdown) {
@@ -436,12 +501,8 @@ export class AnalyticsService {
         const qId = question._id.toString();
         const optionCounts = countMap.get(qId) ?? new Map<string, { count: number; percentage: number }>();
 
-        // Total answers for this specific question
-        // (may be less than totalResponses if question was optional)
-        const questionTotalAnswers = Array.from(optionCounts.values()).reduce(
-          (sum, c) => sum + c.count,
-          0,
-        );
+        const questionTotalAnswers = questionTotalMap?.get(qId)
+          ?? Array.from(optionCounts.values()).reduce((sum, c) => sum + c.count, 0);
 
         const options = question.options
           .sort((a, b) => a.order - b.order)
@@ -477,6 +538,11 @@ interface AnswerBreakdownRow {
   optionId: Types.ObjectId;
   count: number;
   percentage: number;
+}
+
+interface QuestionTotalRow {
+  questionId: Types.ObjectId;
+  totalAnswers: number;
 }
 
 interface TimelineRow {

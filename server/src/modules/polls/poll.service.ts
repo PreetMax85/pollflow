@@ -15,7 +15,7 @@ import {
  * Rules enforced here:
  * - Only the poll creator can edit, delete, or publish their poll
  * - A poll with responses cannot have its questions modified
- * - An expired poll cannot be published (it must be active or have just closed)
+ * - Only expired polls (or active polls past their expiresAt) can be published
  * - A poll can only be published once
  * - Expiry date must always be in the future when updating
  */
@@ -54,7 +54,9 @@ export class PollService {
 
     // Lazy expiry: check if poll is overdue but status hasn't been swept yet
     if (poll.status === "active" && poll.expiresAt <= new Date()) {
-      void PollRepository.expireOverduePolls();
+      PollRepository.expireOverduePolls().catch((e) =>
+        console.error("[PollService] Expiry sweep failed:", e),
+      );
       if (!isCreator) {
         throw ApiError.forbidden(
           "This poll has expired and is no longer publicly accessible",
@@ -104,9 +106,11 @@ export class PollService {
       throw ApiError.forbidden("You do not have permission to edit this poll");
     }
 
-    if (poll.status !== "active") {
+    if (poll.status !== "active" || poll.expiresAt <= new Date()) {
       throw ApiError.badRequest(
-        `Cannot edit a poll with status "${poll.status}". Only active polls can be edited.`,
+        poll.expiresAt <= new Date()
+          ? "This poll has expired and can no longer be edited."
+          : `Cannot edit a poll with status "${poll.status}". Only active polls can be edited.`,
       );
     }
 
@@ -228,7 +232,10 @@ export class PollService {
       throw ApiError.conflict("This poll has already been published");
     }
 
-    if (poll.status !== "expired") {
+    // Allow publish if poll is expired OR if it naturally expired (past expiresAt
+    // but the background cron hasn't swept the status yet)
+    const isNaturallyExpired = poll.status === "active" && poll.expiresAt <= new Date();
+    if (poll.status !== "expired" && !isNaturallyExpired) {
       throw ApiError.badRequest(
         "Only expired polls can be published. Close the poll first, then publish the results.",
       );
@@ -275,7 +282,9 @@ export class PollService {
     // Lazy expiry: check at request time in case the cron hasn't run yet
     if (poll.status === "active" && poll.expiresAt <= new Date()) {
       // Trigger async expiry update — don't await, don't block the response
-      void PollRepository.expireOverduePolls();
+      PollRepository.expireOverduePolls().catch((e) =>
+        console.error("[PollService] Expiry sweep failed:", e),
+      );
       emitPollExpired(pollId);
       throw ApiError.badRequest(
         "This poll has expired and is no longer accepting responses",

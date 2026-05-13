@@ -246,6 +246,7 @@ Login → Access Token (15m, in React memory) + Refresh Token (7d, httpOnly cook
 | **Token blocklist** | On logout, access token's `jti` is stored in MongoDB with TTL = token expiry. Checked on every authenticated request. |
 | **Token rotation** | Refresh endpoint issues both a new access token AND a new refresh token — old refresh token is invalidated |
 | **Anti-enumeration** | Login returns identical error for "user not found" and "wrong password" |
+| **Refresh replay detection** | On rotation, old refresh token's `jti` is blocklisted first via MongoDB unique index. If a concurrent request already rotated it, `E11000` fires and the replay is rejected atomically. |
 | **Refresh on load** | `bootstrapAuth` fires on every page load — hits `/auth/refresh`, repopulates Zustand with fresh access token from the surviving httpOnly cookie |
 
 #### `optionalAuth` Middleware
@@ -290,6 +291,8 @@ All endpoints are versioned under `/api/v1`.
 | GET | `/:pollId` | Optional | Get poll by ID (visibility rules apply) |
 | PATCH | `/:pollId` | ✅ Required | Update title/description/expiresAt |
 | DELETE | `/:pollId` | ✅ Required | Delete poll |
+| POST | `/:pollId/close` | ✅ Required | Close poll early (active → expired) |
+| POST | `/:pollId/duplicate` | ✅ Required | Duplicate poll structure without responses |
 | POST | `/:pollId/publish` | ✅ Required | Publish final results |
 
 #### Responses — `/api/v1/polls`
@@ -324,30 +327,47 @@ Socket.io is used for live updates on two pages:
 
 #### Room Architecture
 
+Two isolated room namespaces per poll — public clients and admin (creator) clients never share a room:
+
+**Public Room — `public:poll:{pollId}`**
 ```
 Client navigates to /polls/:pollId
   → emits "join:poll" with pollId
-  → server: socket.join(`poll:${pollId}`)
+  → server: socket.join(`public:poll:${pollId}`)
   → server confirms: emits "room:joined"
 
 Client navigates away
   → emits "leave:poll" with pollId
-  → server: socket.leave(`poll:${pollId}`)
+  → server: socket.leave(`public:poll:${pollId}`)
 ```
 
-No global broadcasts. All emissions are room-scoped via `io.to('poll:{pollId}').emit(...)`.
+**Admin Room — `poll:admin:{pollId}`** (creator-only analytics)
+```
+Creator opens analytics dashboard
+  → emits "join:poll:admin" with { pollId, token }
+  → server: verifyAccessToken(token)
+  → server: TokenBlocklist.exists({ jti })        ← revoked token check
+  → server: Poll.findById(pollId).createdBy        ← ownership check
+  → server: socket.join(`poll:admin:${pollId}`)    ← only if all checks pass
+  → server confirms: emits "room:joined"
+```
 
-#### Events
+The two namespaces are structurally impossible to collide — `public:poll:admin:123` ≠ `poll:admin:123`.
 
-| Direction | Event | Payload | Trigger |
-|---|---|---|---|
-| Client → Server | `join:poll` | `pollId: string` | User opens poll page |
-| Client → Server | `leave:poll` | `pollId: string` | User navigates away |
-| Server → Client | `room:joined` | `{ pollId, socketId }` | Confirms room join |
-| Server → Client | `poll:response-count` | `{ pollId, totalResponses, timestamp }` | New response submitted |
-| Server → Client | `poll:analytics-update` | `{ pollId, totalResponses, questions[], timestamp }` | New response submitted |
-| Server → Client | `poll:published` | `{ pollId, timestamp }` | Creator publishes results |
-| Server → Client | `poll:expired` | `{ pollId, timestamp }` | Poll expiry detected |
+#### Event Routing
+
+| Direction | Event | Room Scope | Payload | Trigger |
+|---|---|---|---|---|
+| Client → Server | `join:poll` | — | `pollId: string` | User opens poll page |
+| Client → Server | `join:poll:admin` | — | `{ pollId, token }` | Creator opens analytics |
+| Client → Server | `leave:poll` | — | `pollId: string` | User navigates away |
+| Server → Client | `room:joined` | Direct | `{ pollId, socketId }` | Confirms room join |
+| Server → Client | `poll:response-count` | **Both rooms** | `{ pollId, totalResponses, timestamp }` | New response submitted |
+| Server → Client | `poll:analytics-update` | **Admin only** | `{ pollId, totalResponses, questions[], timestamp }` | New response submitted |
+| Server → Client | `poll:published` | Both rooms | `{ pollId, timestamp }` | Creator publishes results |
+| Server → Client | `poll:expired` | Both rooms | `{ pollId, timestamp }` | Poll expiry detected |
+
+Analytics breakdowns (option counts, percentages) are **never** broadcast to the public room — only the admin room receives `poll:analytics-update`. The public room sees only the count.
 
 #### Emission Flow (after a response is submitted)
 
@@ -356,16 +376,14 @@ POST /polls/:pollId/respond
   → ResponseService.submitResponse()
   → ResponseRepository.create()               ← save to DB
   → PollRepository.incrementResponseCount()   ← $inc totalResponses atomically
-  → emitResponseCount(pollId, total)          ← immediate, cheap
+  → emitResponseCount(pollId, total)          ← to public:poll:{id} (immediate, cheap)
   → AnalyticsService.getAnalyticsSnapshot()   ← aggregation pipeline
-  → emitAnalyticsUpdate(pollId, snapshot)     ← full breakdown update
+  → emitAnalyticsUpdate(pollId, snapshot)     ← to poll:admin:{id} (full breakdown)
 ```
-
----
 
 ### Analytics Pipeline
 
-All analytics are computed inside MongoDB using the aggregation framework. Zero mathematical operations happen in Node.js memory.
+Option percentages and per-question answer counts are computed inside MongoDB using `$facet`, `$group`, `$map`, and `$round`. A lightweight completion summary is assembled in Node.js using the pipeline's pre-aggregated counts — no raw response documents are loaded into memory.
 
 #### The Pipeline (`$facet` parallel execution)
 

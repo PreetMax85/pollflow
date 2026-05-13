@@ -114,7 +114,9 @@ const responseSchema = new Schema<IResponse>(
         ret["id"] = ret["_id"];
         delete ret["_id"];
         delete ret["__v"];
-        delete ret["ipAddress"]; // never expose IP in responses
+        delete ret["ipAddress"];
+        delete ret["respondentId"];
+        delete ret["ipHash"];
         return ret;
       },
     },

@@ -9,7 +9,8 @@ import morgan from "morgan";
 import { env } from "./common/config/env.js";
 import { connectDB } from "./common/db/index.js";
 import { errorHandler } from "./common/middleware/error.middleware.js";
-import { initSocket } from "./socket/socket.js";
+import { ApiResponse } from "./common/utils/ApiResponse.js";
+import { initSocket, getIO } from "./socket/socket.js";
 
 // ─── Route Imports ────────────────────────────────────────────────────────────
 // These will exist once each module is built. Importing here so index.ts is
@@ -56,20 +57,20 @@ app.use(
 app.use(helmet());
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 
+// Trust proxy before rate limiter — Railway sends real IP in x-forwarded-for
+if (env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+// Global rate limiter BEFORE body parsers — block abusive IPs before CPU spend
+app.use(globalLimiter);
+
 // Limit request body size to prevent payload-based attacks
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 // Cookie parser — needed to read the httpOnly refresh token cookie
 app.use(cookieParser());
-
-// Apply global rate limiter after body parsing, before routes
-app.use(globalLimiter);
-
-// Trust proxy if behind nginx/Render — required for rate limiting by real IP
-if (env.NODE_ENV === "production") {
-  app.set("trust proxy", 1);
-}
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 // The judge hits this URL. It must return 200 with real system state — not
@@ -82,15 +83,13 @@ app.get("/health", (_req: Request, res: Response) => {
     3: "disconnecting",
   };
 
-  res.status(200).json({
-    status: "ok",
+  ApiResponse.ok(res, "System healthy", {
     uptime: Math.round(process.uptime()),
     environment: env.NODE_ENV,
     timestamp: new Date().toISOString(),
     version: "1.0.0",
     db: {
       status: dbStateMap[mongoose.connection.readyState] ?? "unknown",
-      name: mongoose.connection.name || null,
     },
   });
 });
@@ -152,19 +151,38 @@ startServer();
 const shutdown = async (signal: string): Promise<void> => {
   console.log(`\n[Server] ${signal} received — shutting down gracefully...`);
 
-  httpServer.close((err) => {
-    if (err) {
-      console.error("[Server] Error closing HTTP server:", err.message);
-      process.exit(1);
-    }
-    console.log("[Server] HTTP server closed");
+  // 1. Stop accepting new connections, drain active ones
+  await new Promise<void>((resolve, reject) => {
+    httpServer.close((err) => {
+      if (err) {
+        console.error("[Server] Error closing HTTP server:", err.message);
+        return reject(err);
+      }
+      console.log("[Server] HTTP server closed");
+      resolve();
+    });
   });
 
+  // 2. Explicitly close Socket.io
+  await getIO().close();
+  console.log("[Socket] Socket.io closed");
+
+  // 3. Close MongoDB connection
   await mongoose.connection.close();
   console.log("[DB] MongoDB connection closed");
 
   process.exit(0);
 };
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () =>
+  shutdown("SIGTERM").catch((err) => {
+    console.error("[Server] SIGTERM shutdown failed:", err);
+    process.exit(1);
+  }),
+);
+process.on("SIGINT", () =>
+  shutdown("SIGINT").catch((err) => {
+    console.error("[Server] SIGINT shutdown failed:", err);
+    process.exit(1);
+  }),
+);
