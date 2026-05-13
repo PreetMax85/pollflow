@@ -3,12 +3,34 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, LineChart, Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
 } from "recharts";
 import {
-  Users, TrendingUp, EyeOff, Eye, Clock, Loader2, Send,
-  ArrowLeft, Wifi, WifiOff, Globe, Crown, Zap, CheckSquare, Copy, QrCode, ImageDown,
+  Users,
+  TrendingUp,
+  EyeOff,
+  Eye,
+  Clock,
+  Loader2,
+  Send,
+  ArrowLeft,
+  Wifi,
+  WifiOff,
+  Globe,
+  Crown,
+  Zap,
+  CheckSquare,
+  Copy,
+  QrCode,
+  ImageDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,19 +46,13 @@ import type { ApiResponse, FullAnalytics, QuestionAnalytics, PollStatus } from "
 import { useSocket, type AnalyticsUpdatePayload } from "@/hooks/useSocket";
 
 const getAnalytics = (pollId: string): Promise<FullAnalytics> =>
-  apiClient
-    .get<ApiResponse<FullAnalytics>>(`/analytics/${pollId}`)
-    .then((r) => r.data.data);
+  apiClient.get<ApiResponse<FullAnalytics>>(`/analytics/${pollId}`).then((r) => r.data.data);
 
 const publishPoll = (pollId: string) =>
-  apiClient
-    .post<ApiResponse<{ poll: unknown }>>(`/polls/${pollId}/publish`)
-    .then((r) => r.data);
+  apiClient.post<ApiResponse<{ poll: unknown }>>(`/polls/${pollId}/publish`).then((r) => r.data);
 
 const closePoll = (pollId: string) =>
-  apiClient
-    .post<ApiResponse<{ poll: unknown }>>(`/polls/${pollId}/close`)
-    .then((r) => r.data);
+  apiClient.post<ApiResponse<{ poll: unknown }>>(`/polls/${pollId}/close`).then((r) => r.data);
 
 function useAnimatedCounter(target: number, duration = 700): number {
   const [display, setDisplay] = useState(target);
@@ -68,7 +84,10 @@ function useAnimatedCounter(target: number, duration = 700): number {
   return display;
 }
 
-const STATUS_CONFIG: Record<PollStatus, { label: string; variant: "default" | "secondary" | "outline" }> = {
+const STATUS_CONFIG: Record<
+  PollStatus,
+  { label: string; variant: "default" | "secondary" | "outline" }
+> = {
   active: { label: "Active", variant: "default" },
   expired: { label: "Expired", variant: "secondary" },
   published: { label: "Published", variant: "outline" },
@@ -80,9 +99,15 @@ const StatusBadge = ({ status }: { status: PollStatus }) => {
 };
 
 const StatCard = ({
-  label, value, icon: Icon, description,
+  label,
+  value,
+  icon: Icon,
+  description,
 }: {
-  label: string; value: string | number; icon: React.ElementType; description?: string;
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  description?: string;
 }) => (
   <Card>
     <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -96,7 +121,15 @@ const StatCard = ({
   </Card>
 );
 
-const QuestionCard = ({ question, index, totalResponses }: { question: QuestionAnalytics; index: number; totalResponses: number }) => {
+const QuestionCard = ({
+  question,
+  index,
+  totalResponses,
+}: {
+  question: QuestionAnalytics;
+  index: number;
+  totalResponses: number;
+}) => {
   const topOption = question.options.reduce<QuestionAnalytics["options"][number] | null>(
     (top, opt) => (top === null || opt.count > top.count ? opt : top),
     null,
@@ -166,7 +199,12 @@ const QuestionCard = ({ question, index, totalResponses }: { question: QuestionA
             return (
               <div key={option.optionId} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
-                  <span className={["font-medium truncate max-w-[70%]", isLeading ? "text-primary" : ""].join(" ")}>
+                  <span
+                    className={[
+                      "font-medium truncate max-w-[70%]",
+                      isLeading ? "text-primary" : "",
+                    ].join(" ")}
+                  >
                     {isLeading && (
                       <Crown className="mr-1.5 inline-block h-3.5 w-3.5 text-amber-500" />
                     )}
@@ -190,11 +228,14 @@ const QuestionCard = ({ question, index, totalResponses }: { question: QuestionA
 };
 
 export default function AnalyticsPage() {
-
   const { pollId } = useParams<{ pollId: string }>();
   const queryClient = useQueryClient();
 
-  const { data: initial, isLoading, error } = useQuery({
+  const {
+    data: initial,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["analytics", pollId],
     queryFn: () => getAnalytics(pollId!),
     enabled: !!pollId,
@@ -204,10 +245,6 @@ export default function AnalyticsPage() {
   const [liveData, setLiveData] = useState<FullAnalytics | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const localPublishRef = useRef(false);
-
-  useEffect(() => {
-    if (initial && !liveData) setLiveData(initial);
-  }, [initial, liveData]);
 
   const analytics = liveData ?? initial ?? null;
 
@@ -234,23 +271,36 @@ export default function AnalyticsPage() {
     return (analytics.totalResponses / hours).toFixed(1);
   }, [analytics]);
 
-  const handleAnalyticsUpdate = useCallback((payload: AnalyticsUpdatePayload) => {
-    setLiveData((prev): FullAnalytics | null => {
-      if (!prev) return prev;
-      const questions = payload.questions.map((q) => ({
-        ...q,
-        isRequired: prev.questions.find((pq) => pq.questionId === q.questionId)?.isRequired ?? true,
-      }));
-      const required = questions.filter((q) => q.isRequired);
-      const completionRate = required.length === 0 ? 100
-        : Math.round(
-            (required.reduce((s, q) => s + q.totalAnswers, 0) / (required.length * payload.totalResponses)) * 100,
-          );
-      const updated: FullAnalytics = { ...prev, totalResponses: payload.totalResponses, questions, completionRate };
-      if (pollId) queryClient.setQueryData(["analytics", pollId], updated);
-      return updated;
-    });
-  }, [pollId, queryClient]);
+  const handleAnalyticsUpdate = useCallback(
+    (payload: AnalyticsUpdatePayload) => {
+      setLiveData((prev): FullAnalytics | null => {
+        if (!prev) return prev;
+        const questions = payload.questions.map((q) => ({
+          ...q,
+          isRequired:
+            prev.questions.find((pq) => pq.questionId === q.questionId)?.isRequired ?? true,
+        }));
+        const required = questions.filter((q) => q.isRequired);
+        const completionRate =
+          required.length === 0
+            ? 100
+            : Math.round(
+                (required.reduce((s, q) => s + q.totalAnswers, 0) /
+                  (required.length * payload.totalResponses)) *
+                  100,
+              );
+        const updated: FullAnalytics = {
+          ...prev,
+          totalResponses: payload.totalResponses,
+          questions,
+          completionRate,
+        };
+        if (pollId) queryClient.setQueryData(["analytics", pollId], updated);
+        return updated;
+      });
+    },
+    [pollId, queryClient],
+  );
 
   const handleResponseCount = useCallback(
     ({ totalResponses }: { totalResponses: number; pollId: string; timestamp: string }) => {
@@ -327,9 +377,7 @@ export default function AnalyticsPage() {
       "",
       ...analytics.questions.map((q, i) => {
         const top = [...q.options].sort((a, b) => b.count - a.count)[0];
-        const leading = top
-          ? `${top.optionText} (${top.percentage}%)`
-          : "No answers yet";
+        const leading = top ? `${top.optionText} (${top.percentage}%)` : "No answers yet";
         return `Q${i + 1}: ${q.questionText}\n   → Leading: ${leading}`;
       }),
     ];
@@ -342,7 +390,9 @@ export default function AnalyticsPage() {
       <div className="space-y-6">
         <Skeleton className="h-8 w-64" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-28" />
+          ))}
         </div>
         <Skeleton className="h-64" />
       </div>
@@ -376,31 +426,52 @@ export default function AnalyticsPage() {
               <ArrowLeft className="mr-1 h-4 w-4" /> Dashboard
             </Link>
           </Button>
-          <h1 className="landing-heading text-2xl font-bold tracking-tight">{analytics.pollTitle}</h1>
+          <h1 className="landing-heading text-2xl font-bold tracking-tight">
+            {analytics.pollTitle}
+          </h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge status={analytics.status} />
             <Badge
               variant="outline"
-              className={["gap-1 text-xs", isConnected ? "border-green-200 text-green-600" : "text-muted-foreground"].join(" ")}
+              className={[
+                "gap-1 text-xs",
+                isConnected ? "border-green-200 text-green-600" : "text-muted-foreground",
+              ].join(" ")}
             >
-              {isConnected
-                ? <><Wifi className="h-3 w-3" />Live</>
-                : <><WifiOff className="h-3 w-3" />Offline</>}
+              {isConnected ? (
+                <>
+                  <Wifi className="h-3 w-3" />
+                  Live
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3 w-3" />
+                  Offline
+                </>
+              )}
             </Badge>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={copySnapshot}
-            disabled={analytics.totalResponses === 0}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={copySnapshot}
+            disabled={analytics.totalResponses === 0}
+          >
             <Copy className="mr-2 h-4 w-4" />
             Copy summary
           </Button>
 
-          <Button variant="outline" size="sm" onClick={() => {
-            void navigator.clipboard.writeText(shareUrl);
-            toast.success("Poll link copied!");
-          }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void navigator.clipboard.writeText(shareUrl);
+              toast.success("Poll link copied!");
+            }}
+          >
             Copy poll link
           </Button>
 
@@ -410,21 +481,35 @@ export default function AnalyticsPage() {
           </Button>
 
           {analytics.status !== "published" && (
-            <Button size="sm"
+            <Button
+              size="sm"
               onClick={() => closeAndPublishMutation.mutate()}
-              disabled={!canPublish || closeAndPublishMutation.isPending}>
-              {closeAndPublishMutation.isPending
-                ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{isActive ? "Closing…" : "Publishing…"}</>
-                : <><Send className="mr-2 h-4 w-4" />{isActive ? "Close & Publish" : "Publish Results"}</>}
+              disabled={!canPublish || closeAndPublishMutation.isPending}
+            >
+              {closeAndPublishMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isActive ? "Closing…" : "Publishing…"}
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  {isActive ? "Close & Publish" : "Publish Results"}
+                </>
+              )}
             </Button>
           )}
 
           {analytics.status === "published" && (
             <>
-              <Button variant="outline" size="sm" onClick={() => {
-                void navigator.clipboard.writeText(resultsUrl);
-                toast.success("Results link copied!");
-              }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void navigator.clipboard.writeText(resultsUrl);
+                  toast.success("Results link copied!");
+                }}
+              >
                 <Globe className="mr-2 h-4 w-4" /> Copy results link
               </Button>
               <Button
@@ -433,10 +518,17 @@ export default function AnalyticsPage() {
                 onClick={() => void exportCard()}
                 disabled={isExporting}
               >
-                {isExporting
-                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating…</>
-                  : <><ImageDown className="mr-2 h-4 w-4" />Share Results</>
-                }
+                {isExporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating…
+                  </>
+                ) : (
+                  <>
+                    <ImageDown className="mr-2 h-4 w-4" />
+                    Share Results
+                  </>
+                )}
               </Button>
             </>
           )}
@@ -444,15 +536,23 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Total Responses" value={animatedResponses} icon={Users}
-          description="responses collected" />
+        <StatCard
+          label="Total Responses"
+          value={animatedResponses}
+          icon={Users}
+          description="responses collected"
+        />
 
-        <StatCard label="Completion Rate" value={`${completionRate}%`} icon={CheckSquare}
+        <StatCard
+          label="Completion Rate"
+          value={`${completionRate}%`}
+          icon={CheckSquare}
           description={
             completionRate === 100
               ? "All required questions answered"
               : `${100 - completionRate}% skipped a required question`
-          } />
+          }
+        />
 
         <StatCard
           label="Response Velocity"
@@ -461,11 +561,19 @@ export default function AnalyticsPage() {
           description={responseVelocity ? "avg responses per hour" : "not enough data yet"}
         />
 
-        <StatCard label="Questions" value={analytics.questions.length} icon={TrendingUp}
-          description="in this poll" />
+        <StatCard
+          label="Questions"
+          value={analytics.questions.length}
+          icon={TrendingUp}
+          description="in this poll"
+        />
 
-        <StatCard label="Anonymous" value={analytics.anonymousCount} icon={EyeOff}
-          description={`${analytics.identifiedCount} identified`} />
+        <StatCard
+          label="Anonymous"
+          value={analytics.anonymousCount}
+          icon={EyeOff}
+          description={`${analytics.identifiedCount} identified`}
+        />
 
         <StatCard
           label="Status"
@@ -475,8 +583,8 @@ export default function AnalyticsPage() {
             analytics.status === "active"
               ? `Closes ${new Date(analytics.expiresAt).toLocaleDateString()}`
               : analytics.status === "published"
-              ? "Results are public"
-              : "No longer accepting responses"
+                ? "Results are public"
+                : "No longer accepting responses"
           }
         />
       </div>
@@ -489,10 +597,13 @@ export default function AnalyticsPage() {
             <p className="mb-4 mt-1 text-sm text-muted-foreground">
               Share your poll link. This page updates live.
             </p>
-            <Button variant="outline" onClick={() => {
-              void navigator.clipboard.writeText(shareUrl);
-              toast.success("Poll link copied!");
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                void navigator.clipboard.writeText(shareUrl);
+                toast.success("Poll link copied!");
+              }}
+            >
               Copy poll link
             </Button>
           </CardContent>
@@ -508,26 +619,45 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-48">
               <ResponsiveContainer width="100%" height={192}>
-                <LineChart data={analytics.dailyTimeline}
-                  margin={{ top: 4, right: 4, left: -24, bottom: 4 }}>
+                <LineChart
+                  data={analytics.dailyTimeline}
+                  margin={{ top: 4, right: 4, left: -24, bottom: 4 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }}
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11 }}
                     tickFormatter={(val: string) =>
-                      new Date(val).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+                      new Date(val).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                      })
                     }
                   />
                   <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                   <Tooltip
                     labelFormatter={(label: unknown) =>
                       new Date(String(label)).toLocaleDateString(undefined, {
-                        weekday: "short", month: "short", day: "numeric",
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
                       })
                     }
                     formatter={(value: unknown) => [Number(value), "Responses"] as [number, string]}
-                    contentStyle={{ fontSize: 12, borderRadius: 6, border: "1px solid hsl(var(--border))" }}
+                    contentStyle={{
+                      fontSize: 12,
+                      borderRadius: 6,
+                      border: "1px solid hsl(var(--border))",
+                    }}
                   />
-                  <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))"
-                    strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 5 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -541,7 +671,12 @@ export default function AnalyticsPage() {
         <div className="space-y-4">
           <h2 className="landing-heading text-lg font-semibold">Question Breakdown</h2>
           {analytics.questions.map((question, index) => (
-            <QuestionCard key={question.questionId} question={question} index={index} totalResponses={analytics.totalResponses} />
+            <QuestionCard
+              key={question.questionId}
+              question={question}
+              index={index}
+              totalResponses={analytics.totalResponses}
+            />
           ))}
         </div>
       )}
@@ -551,12 +686,15 @@ export default function AnalyticsPage() {
         style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}
         aria-hidden="true"
       >
-        <ResultsCard ref={cardRef} data={{
-          pollTitle: analytics.pollTitle,
-          totalResponses: analytics.totalResponses,
-          questions: analytics.questions,
-          publishedAt: analytics.publishedAt,
-        }} />
+        <ResultsCard
+          ref={cardRef}
+          data={{
+            pollTitle: analytics.pollTitle,
+            totalResponses: analytics.totalResponses,
+            questions: analytics.questions,
+            publishedAt: analytics.publishedAt,
+          }}
+        />
       </div>
 
       <QRCodeModal

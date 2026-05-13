@@ -159,7 +159,12 @@ export class AnalyticsService {
                           $round: [
                             {
                               $multiply: [
-                                { $divide: ["$$row.count", { $arrayElemAt: ["$totalCount.count", 0] }] },
+                                {
+                                  $divide: [
+                                    "$$row.count",
+                                    { $arrayElemAt: ["$totalCount.count", 0] },
+                                  ],
+                                },
                                 100,
                               ],
                             },
@@ -188,7 +193,9 @@ export class AnalyticsService {
     const anonymousBreakdown: AnonymousRow[] = result?.anonymousBreakdown ?? [];
 
     // Build a lookup: questionId → totalAnswers (from pipeline, not JS reduce)
-    const questionTotalMap = new Map(questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]));
+    const questionTotalMap = new Map(
+      questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]),
+    );
 
     // ── Merge question/option text from poll document ─────────────────────────
     // The pipeline gives us counts by ObjectId — we attach human-readable text
@@ -304,7 +311,12 @@ export class AnalyticsService {
                           $round: [
                             {
                               $multiply: [
-                                { $divide: ["$$row.count", { $arrayElemAt: ["$totalCount.count", 0] }] },
+                                {
+                                  $divide: [
+                                    "$$row.count",
+                                    { $arrayElemAt: ["$totalCount.count", 0] },
+                                  ],
+                                },
                                 100,
                               ],
                             },
@@ -328,7 +340,9 @@ export class AnalyticsService {
     const totalResponses: number = result?.totalCount?.[0]?.count ?? 0;
     const answerBreakdown: AnswerBreakdownRow[] = result?.answerBreakdown ?? [];
     const questionTotals: QuestionTotalRow[] = result?.questionTotals ?? [];
-    const questionTotalMap = new Map(questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]));
+    const questionTotalMap = new Map(
+      questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]),
+    );
 
     const questions = AnalyticsService.mergeQuestionData(
       poll.questions,
@@ -428,7 +442,12 @@ export class AnalyticsService {
                           $round: [
                             {
                               $multiply: [
-                                { $divide: ["$$row.count", { $arrayElemAt: ["$totalCount.count", 0] }] },
+                                {
+                                  $divide: [
+                                    "$$row.count",
+                                    { $arrayElemAt: ["$totalCount.count", 0] },
+                                  ],
+                                },
                                 100,
                               ],
                             },
@@ -453,7 +472,9 @@ export class AnalyticsService {
     const answerBreakdown: AnswerBreakdownRow[] = result?.answerBreakdown ?? [];
     const questionTotals: QuestionTotalRow[] = result?.questionTotals ?? [];
     const dailyTimeline: TimelineRow[] = result?.dailyTimeline ?? [];
-    const questionTotalMap = new Map(questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]));
+    const questionTotalMap = new Map(
+      questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]),
+    );
 
     const questions = AnalyticsService.mergeQuestionData(
       poll.questions,
@@ -499,10 +520,12 @@ export class AnalyticsService {
       .sort((a, b) => a.order - b.order)
       .map((question) => {
         const qId = question._id.toString();
-        const optionCounts = countMap.get(qId) ?? new Map<string, { count: number; percentage: number }>();
+        const optionCounts =
+          countMap.get(qId) ?? new Map<string, { count: number; percentage: number }>();
 
-        const questionTotalAnswers = questionTotalMap?.get(qId)
-          ?? Array.from(optionCounts.values()).reduce((sum, c) => sum + c.count, 0);
+        const questionTotalAnswers =
+          questionTotalMap?.get(qId) ??
+          Array.from(optionCounts.values()).reduce((sum, c) => sum + c.count, 0);
 
         const options = question.options
           .sort((a, b) => a.order - b.order)

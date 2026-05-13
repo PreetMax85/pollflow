@@ -15,9 +15,9 @@ export interface TokenPayload extends jwt.JwtPayload {
 export const generateAccessToken = (payload: { userId: string }): string => {
   const options = { expiresIn: env.JWT_ACCESS_EXPIRES_IN || "15m" } as jwt.SignOptions;
   return jwt.sign(
-    { ...payload, type: "access", jti: crypto.randomUUID() },  // ← add jti
+    { ...payload, type: "access", jti: crypto.randomUUID() }, // ← add jti
     ACCESS_SECRET,
-    options
+    options,
   );
 };
 
@@ -42,7 +42,7 @@ export const generateRefreshToken = (payload: { userId: string }): string => {
   return jwt.sign(
     { ...payload, type: "refresh", jti: crypto.randomUUID() }, // ← add jti
     REFRESH_SECRET,
-    options
+    options,
   );
 };
 
@@ -67,10 +67,7 @@ export const generateResetToken = (): {
   resetTokenExpiresAt: Date;
 } => {
   const rawToken = crypto.randomBytes(32).toString("hex");
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(rawToken)
-    .digest("hex");
+  const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
   const resetTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
   return { rawToken, hashedToken, resetTokenExpiresAt };
 };

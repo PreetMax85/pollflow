@@ -17,9 +17,7 @@ export const errorHandler = (
   // 1. Zod validation errors
   if (err instanceof ZodError) {
     statusCode = 400;
-    message = err.issues
-      .map((e) => `${e.path.join(".")}: ${e.message}`)
-      .join(", ");
+    message = err.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
     res.status(statusCode).json({ success: false, error: message });
     return;
   }
@@ -33,7 +31,7 @@ export const errorHandler = (
     return;
   }
 
-// 3. MongoDB duplicate key (email already registered, duplicate vote, etc.)
+  // 3. MongoDB duplicate key (email already registered, duplicate vote, etc.)
   if (err instanceof MongoServerError && err.code === 11000) {
     const isDuplicateResponse =
       err.message?.includes("unique_authenticated_response") ||
@@ -49,7 +47,9 @@ export const errorHandler = (
 
   // 4. Mongoose validation error (schema-level, catches required fields etc.)
   if (err instanceof MongooseError.ValidationError) {
-    const message = Object.values(err.errors).map((e) => e.message).join(", ");
+    const message = Object.values(err.errors)
+      .map((e) => e.message)
+      .join(", ");
     res.status(400).json({ success: false, error: message });
     return;
   }

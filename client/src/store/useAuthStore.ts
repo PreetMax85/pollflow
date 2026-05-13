@@ -64,14 +64,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   isAuthenticated: false,
 
   // ── Actions ──────────────────────────────────────────────────────────────
-  setAuth: (user, accessToken) =>
-    set({ user, accessToken, isAuthenticated: true }),
+  setAuth: (user, accessToken) => set({ user, accessToken, isAuthenticated: true }),
 
-  setAccessToken: (accessToken) =>
-    set({ accessToken }),
+  setAccessToken: (accessToken) => set({ accessToken }),
 
-  clearAuth: () =>
-    set({ accessToken: null, user: null, isAuthenticated: false }),
+  clearAuth: () => set({ accessToken: null, user: null, isAuthenticated: false }),
 }));
 
 // ─── Selector Helpers ─────────────────────────────────────────────────────────
@@ -85,5 +82,4 @@ export const selectAccessToken = (s: AuthState & AuthActions) => s.accessToken;
 export const selectUser = (s: AuthState & AuthActions) => s.user;
 
 /** Returns the boolean guard flag. */
-export const selectIsAuthenticated = (s: AuthState & AuthActions) =>
-  s.isAuthenticated;
+export const selectIsAuthenticated = (s: AuthState & AuthActions) => s.isAuthenticated;

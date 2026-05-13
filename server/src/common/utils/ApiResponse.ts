@@ -2,11 +2,7 @@ import { Response } from "express";
 import { HttpStatus } from "../constants/http-status.js";
 
 export class ApiResponse {
-  static ok<T>(
-    res: Response,
-    message: string,
-    data: T | null = null,
-  ): Response {
+  static ok<T>(res: Response, message: string, data: T | null = null): Response {
     return res.status(HttpStatus.OK).json({
       success: true,
       message,
@@ -14,11 +10,7 @@ export class ApiResponse {
     });
   }
 
-  static created<T>(
-    res: Response,
-    message: string,
-    data: T | null = null,
-  ): Response {
+  static created<T>(res: Response, message: string, data: T | null = null): Response {
     return res.status(HttpStatus.CREATED).json({
       success: true,
       message,

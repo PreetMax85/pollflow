@@ -35,8 +35,7 @@ import { authApi } from "@/api/auth";
 // ─── Validation Schema ────────────────────────────────────────────────────────
 // Mirrors the backend registerSchema exactly — same regex, same messages.
 
-const passwordRegex =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
 
 const passwordMessage =
   "Password must contain uppercase, lowercase, number, and special character (@$!%*?&)";
@@ -80,8 +79,8 @@ export default function RegisterPage() {
       navigate(from, { replace: true });
     } catch (error) {
       const message =
-        (error as { response?: { data?: { message?: string } } })
-          ?.response?.data?.message ?? "Registration failed. Please try again.";
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Registration failed. Please try again.";
       toast.error(message);
     }
   };
@@ -95,27 +94,19 @@ export default function RegisterPage() {
             <BarChart3 className="h-5 w-5 text-primary-foreground" />
           </div>
           <h1 className="landing-heading text-2xl font-bold tracking-tight">PollFlow</h1>
-          <p className="text-sm text-muted-foreground">
-            Real-time polls, live results
-          </p>
+          <p className="text-sm text-muted-foreground">Real-time polls, live results</p>
         </div>
 
         {/* Card */}
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="landing-heading text-xl">Create an account</CardTitle>
-            <CardDescription>
-              Get started with PollFlow in seconds
-            </CardDescription>
+            <CardDescription>Get started with PollFlow in seconds</CardDescription>
           </CardHeader>
 
           <CardContent>
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-                noValidate
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
                 {/* Name */}
                 <FormField
                   control={form.control}
@@ -195,11 +186,7 @@ export default function RegisterPage() {
                   )}
                 />
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isSubmitting}
-                >
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

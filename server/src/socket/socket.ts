@@ -19,20 +19,11 @@ interface ServerToClientEvents {
     timestamp: string;
   }) => void;
 
-  "poll:published": (payload: {
-    pollId: string;
-    timestamp: string;
-  }) => void;
+  "poll:published": (payload: { pollId: string; timestamp: string }) => void;
 
-  "poll:expired": (payload: {
-    pollId: string;
-    timestamp: string;
-  }) => void;
+  "poll:expired": (payload: { pollId: string; timestamp: string }) => void;
 
-  "room:joined": (payload: {
-    pollId: string;
-    socketId: string;
-  }) => void;
+  "room:joined": (payload: { pollId: string; socketId: string }) => void;
 }
 
 interface ClientToServerEvents {
@@ -68,24 +59,14 @@ export interface AnalyticsSnapshot {
   questions: QuestionAnalytics[];
 }
 
-let io: SocketServer<
-  ClientToServerEvents,
-  ServerToClientEvents,
-  InterServerEvents,
-  SocketData
->;
+let io: SocketServer<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 
 const PUBLIC_PREFIX = "public:poll:";
 const ADMIN_PREFIX = "poll:admin:";
 
 export const initSocket = (
   httpServer: HttpServer,
-): SocketServer<
-  ClientToServerEvents,
-  ServerToClientEvents,
-  InterServerEvents,
-  SocketData
-> => {
+): SocketServer<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData> => {
   if (io) {
     console.warn("[Socket] initSocket called more than once — returning existing instance");
     return io;
@@ -105,94 +86,97 @@ export const initSocket = (
     pingInterval: 25000,
   });
 
-  io.on("connection", (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) => {
-    console.log(`[Socket] Client connected   : ${socket.id}`);
-    socket.data.joinedRooms = new Set();
+  io.on(
+    "connection",
+    (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) => {
+      console.log(`[Socket] Client connected   : ${socket.id}`);
+      socket.data.joinedRooms = new Set();
 
-    // ── join:poll (public room) ──────────────────────────────────────────
-    // Anyone can join — receives count updates, publish/expiry events.
-    // Does NOT receive analytics breakdown (option counts/percentages).
-    socket.on("join:poll", (pollId: string) => {
-      if (!pollId || typeof pollId !== "string" || pollId.trim().length === 0) {
-        console.warn(`[Socket] Invalid pollId from ${socket.id}: ${pollId}`);
-        return;
-      }
-
-      const room = `${PUBLIC_PREFIX}${pollId.trim()}`;
-      if (socket.data.joinedRooms.has(room)) return;
-
-      socket.join(room);
-      socket.data.joinedRooms.add(room);
-      socket.emit("room:joined", { pollId, socketId: socket.id });
-
-      console.log(`[Socket] ${socket.id} joined room : ${room}`);
-    });
-
-    // ── join:poll:admin (admin room — creator only) ──────────────────────────
-    // Requires a valid Bearer token. Server verifies the token, checks that
-    // the authenticated user is the poll creator, then joins the admin room.
-    // Admin room receives full analytics updates including option breakdowns.
-    socket.on("join:poll:admin", async (payload: { pollId: string; token: string }) => {
-      try {
-        if (!payload || !payload.pollId || !payload.token) {
-          socket.emit("room:joined", { pollId: "error", socketId: socket.id });
+      // ── join:poll (public room) ──────────────────────────────────────────
+      // Anyone can join — receives count updates, publish/expiry events.
+      // Does NOT receive analytics breakdown (option counts/percentages).
+      socket.on("join:poll", (pollId: string) => {
+        if (!pollId || typeof pollId !== "string" || pollId.trim().length === 0) {
+          console.warn(`[Socket] Invalid pollId from ${socket.id}: ${pollId}`);
           return;
         }
 
-        const decoded = verifyAccessToken(payload.token);
-
-        const isRevoked = await TokenBlocklist.exists({ jti: decoded.jti });
-        if (isRevoked) {
-          socket.emit("room:joined", { pollId: "error", socketId: socket.id });
-          return;
-        }
-
-        const pollId = payload.pollId.trim();
-        const poll = await Poll.findById(pollId).select("createdBy").lean();
-
-        if (!poll || poll.createdBy.toString() !== decoded.userId) {
-          socket.emit("room:joined", { pollId: "error", socketId: socket.id });
-          return;
-        }
-
-        const room = `${ADMIN_PREFIX}${pollId}`;
+        const room = `${PUBLIC_PREFIX}${pollId.trim()}`;
         if (socket.data.joinedRooms.has(room)) return;
 
         socket.join(room);
         socket.data.joinedRooms.add(room);
         socket.emit("room:joined", { pollId, socketId: socket.id });
 
-        console.log(`[Socket] ${socket.id} joined admin room : ${room}`);
-      } catch {
-        socket.emit("room:joined", { pollId: "error", socketId: socket.id });
-      }
-    });
+        console.log(`[Socket] ${socket.id} joined room : ${room}`);
+      });
 
-    // ── leave:poll ─────────────────────────────────────────────────────────
-    socket.on("leave:poll", (pollId: string) => {
-      if (!pollId || typeof pollId !== "string") return;
+      // ── join:poll:admin (admin room — creator only) ──────────────────────────
+      // Requires a valid Bearer token. Server verifies the token, checks that
+      // the authenticated user is the poll creator, then joins the admin room.
+      // Admin room receives full analytics updates including option breakdowns.
+      socket.on("join:poll:admin", async (payload: { pollId: string; token: string }) => {
+        try {
+          if (!payload || !payload.pollId || !payload.token) {
+            socket.emit("room:joined", { pollId: "error", socketId: socket.id });
+            return;
+          }
 
-      const publicRoom = `${PUBLIC_PREFIX}${pollId.trim()}`;
-      const adminRoom = `${ADMIN_PREFIX}${pollId.trim()}`;
+          const decoded = verifyAccessToken(payload.token);
 
-      socket.leave(publicRoom);
-      socket.data.joinedRooms.delete(publicRoom);
+          const isRevoked = await TokenBlocklist.exists({ jti: decoded.jti });
+          if (isRevoked) {
+            socket.emit("room:joined", { pollId: "error", socketId: socket.id });
+            return;
+          }
 
-      socket.leave(adminRoom);
-      socket.data.joinedRooms.delete(adminRoom);
+          const pollId = payload.pollId.trim();
+          const poll = await Poll.findById(pollId).select("createdBy").lean();
 
-      console.log(`[Socket] ${socket.id} left rooms : ${publicRoom}, ${adminRoom}`);
-    });
+          if (!poll || poll.createdBy.toString() !== decoded.userId) {
+            socket.emit("room:joined", { pollId: "error", socketId: socket.id });
+            return;
+          }
 
-    socket.on("disconnect", (reason: string) => {
-      console.log(`[Socket] Client disconnected: ${socket.id} — reason: ${reason}`);
-      socket.data.joinedRooms.clear();
-    });
+          const room = `${ADMIN_PREFIX}${pollId}`;
+          if (socket.data.joinedRooms.has(room)) return;
 
-    socket.on("error", (err: Error) => {
-      console.error(`[Socket] Error on ${socket.id}:`, err.message);
-    });
-  });
+          socket.join(room);
+          socket.data.joinedRooms.add(room);
+          socket.emit("room:joined", { pollId, socketId: socket.id });
+
+          console.log(`[Socket] ${socket.id} joined admin room : ${room}`);
+        } catch {
+          socket.emit("room:joined", { pollId: "error", socketId: socket.id });
+        }
+      });
+
+      // ── leave:poll ─────────────────────────────────────────────────────────
+      socket.on("leave:poll", (pollId: string) => {
+        if (!pollId || typeof pollId !== "string") return;
+
+        const publicRoom = `${PUBLIC_PREFIX}${pollId.trim()}`;
+        const adminRoom = `${ADMIN_PREFIX}${pollId.trim()}`;
+
+        socket.leave(publicRoom);
+        socket.data.joinedRooms.delete(publicRoom);
+
+        socket.leave(adminRoom);
+        socket.data.joinedRooms.delete(adminRoom);
+
+        console.log(`[Socket] ${socket.id} left rooms : ${publicRoom}, ${adminRoom}`);
+      });
+
+      socket.on("disconnect", (reason: string) => {
+        console.log(`[Socket] Client disconnected: ${socket.id} — reason: ${reason}`);
+        socket.data.joinedRooms.clear();
+      });
+
+      socket.on("error", (err: Error) => {
+        console.error(`[Socket] Error on ${socket.id}:`, err.message);
+      });
+    },
+  );
 
   console.log("[Socket] Socket.io initialized");
   return io;
@@ -204,10 +188,7 @@ export const initSocket = (
  * Broadcast response count to the PUBLIC room — non-sensitive, just a number.
  * Admin clients are also in the public room so they receive this too.
  */
-export const emitResponseCount = (
-  pollId: string,
-  totalResponses: number,
-): void => {
+export const emitResponseCount = (pollId: string, totalResponses: number): void => {
   if (!io) {
     console.warn("[Socket] emitResponseCount called before io was initialized");
     return;
@@ -224,10 +205,7 @@ export const emitResponseCount = (
  * Option counts and percentages are private until the creator publishes results.
  * Only clients that authenticated and proved creator status receive this.
  */
-export const emitAnalyticsUpdate = (
-  pollId: string,
-  snapshot: AnalyticsSnapshot,
-): void => {
+export const emitAnalyticsUpdate = (pollId: string, snapshot: AnalyticsSnapshot): void => {
   if (!io) {
     console.warn("[Socket] emitAnalyticsUpdate called before io was initialized");
     return;
@@ -284,9 +262,7 @@ export const getIO = (): SocketServer<
   SocketData
 > => {
   if (!io) {
-    throw new Error(
-      "[Socket] Socket.io is not initialized. Call initSocket(httpServer) first.",
-    );
+    throw new Error("[Socket] Socket.io is not initialized. Call initSocket(httpServer) first.");
   }
   return io;
 };

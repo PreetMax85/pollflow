@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 
@@ -15,10 +21,6 @@ export function QRCodeModal({ url, open, onClose, pollTitle }: QRCodeModalProps)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) {
-      setQrDataUrl(null);
-      return;
-    }
     QRCode.toDataURL(url, {
       width: 240,
       margin: 2,
@@ -47,9 +49,7 @@ export function QRCodeModal({ url, open, onClose, pollTitle }: QRCodeModalProps)
       <DialogContent className="max-w-xs text-center">
         <DialogHeader>
           <DialogTitle className="text-base">Scan to respond</DialogTitle>
-          <DialogDescription className="sr-only">
-            QR code for {pollTitle}
-          </DialogDescription>
+          <DialogDescription className="sr-only">QR code for {pollTitle}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center gap-4">
           {qrDataUrl ? (

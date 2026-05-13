@@ -64,8 +64,8 @@ export default function LoginPage() {
       navigate(from, { replace: true });
     } catch (error) {
       const message =
-        (error as { response?: { data?: { message?: string } } })
-          ?.response?.data?.message ?? "Login failed. Please try again.";
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Login failed. Please try again.";
       toast.error(message);
     }
   };
@@ -79,27 +79,19 @@ export default function LoginPage() {
             <BarChart3 className="h-5 w-5 text-primary-foreground" />
           </div>
           <h1 className="landing-heading text-2xl font-bold tracking-tight">PollFlow</h1>
-          <p className="text-sm text-muted-foreground">
-            Real-time polls, live results
-          </p>
+          <p className="text-sm text-muted-foreground">Real-time polls, live results</p>
         </div>
 
         {/* Card */}
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="landing-heading text-xl">Sign in</CardTitle>
-            <CardDescription>
-              Enter your credentials to access your account
-            </CardDescription>
+            <CardDescription>Enter your credentials to access your account</CardDescription>
           </CardHeader>
 
           <CardContent>
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-                noValidate
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
                 {/* Email */}
                 <FormField
                   control={form.control}
@@ -167,11 +159,7 @@ export default function LoginPage() {
                   )}
                 />
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isSubmitting}
-                >
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

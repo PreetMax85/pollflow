@@ -32,7 +32,7 @@ import { pollsApi } from "@/api/polls";
 import type { Poll, PollQuestion } from "@/types";
 import { submitResponse } from "@/api/responses";
 import { useAuthStore, selectIsAuthenticated, selectUser } from "@/store/useAuthStore";
-import { useSocket, type PollStatusPayload } from "@/hooks/useSocket";
+import { useSocket } from "@/hooks/useSocket";
 import { useCountdown } from "@/hooks/useCountdown";
 
 type FormValues = Record<string, string>;
@@ -120,9 +120,7 @@ const QuestionCard = ({ question, index, value, onChange, error }: QuestionCardP
                 ].join(" ")}
               >
                 <RadioGroupItem value={option._id} id={option._id} />
-                <span className="flex-1 cursor-pointer font-normal">
-                  {option.text}
-                </span>
+                <span className="flex-1 cursor-pointer font-normal">{option.text}</span>
               </Label>
             ))}
         </div>
@@ -147,7 +145,8 @@ const IdentityBanner = ({ poll, pollId }: IdentityBannerProps) => {
         <div>
           <p className="text-sm font-medium text-teal-700">Anonymous poll</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Your identity will not be stored or shown in the results, regardless of whether you&apos;re signed in.
+            Your identity will not be stored or shown in the results, regardless of whether
+            you&apos;re signed in.
           </p>
         </div>
       </div>
@@ -161,8 +160,8 @@ const IdentityBanner = ({ poll, pollId }: IdentityBannerProps) => {
         <div>
           <p className="text-sm font-medium text-foreground">Responding as {user.name}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {user.email} &middot; Your response will be attributed to your account.
-            You can only respond once.
+            {user.email} &middot; Your response will be attributed to your account. You can only
+            respond once.
           </p>
         </div>
       </div>
@@ -196,25 +195,26 @@ export default function RespondPage() {
   const [isExpiredBySocket, setIsExpiredBySocket] = useState(false);
 
   // ✅ unwrap ApiResponse envelope → data.poll is the Poll object
-  const { data: poll, isLoading, error } = useQuery<Poll, Error>({
+  const {
+    data: poll,
+    isLoading,
+    error,
+  } = useQuery<Poll, Error>({
     queryKey: ["poll", pollId],
     queryFn: () => pollsApi.getById(pollId!).then((r) => r.data),
     enabled: !!pollId,
     retry: false,
   });
 
-  const handlePollExpired = useCallback((_p: PollStatusPayload) => {
+  const handlePollExpired = useCallback(() => {
     setIsExpiredBySocket(true);
     toast.error("This poll has just expired.");
   }, []);
 
-  const handlePollPublished = useCallback(
-    (_p: PollStatusPayload) => {
-      toast.info("Results have been published!");
-      navigate(`/polls/${pollId}/results`, { replace: true });
-    },
-    [navigate, pollId],
-  );
+  const handlePollPublished = useCallback(() => {
+    toast.info("Results have been published!");
+    navigate(`/polls/${pollId}/results`, { replace: true });
+  }, [navigate, pollId]);
 
   useSocket({
     pollId: pollId ?? "",
@@ -258,7 +258,12 @@ export default function RespondPage() {
     return values;
   }, [poll]);
 
-  const { handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
+  const {
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(schema) as unknown as Resolver<FormValues>,
     defaultValues: defaultFormValues,
   });
@@ -301,7 +306,11 @@ export default function RespondPage() {
         icon={<XCircle className="h-7 w-7 text-destructive" />}
         title="Poll not found"
         description="This link may be invalid."
-        action={<Button asChild variant="outline"><Link to="/">Go home</Link></Button>}
+        action={
+          <Button asChild variant="outline">
+            <Link to="/">Go home</Link>
+          </Button>
+        }
       />
     );
   if (poll?.status === "published") return null;
@@ -321,7 +330,9 @@ export default function RespondPage() {
         description="You must be logged in to respond."
         action={
           <Button asChild>
-            <Link to="/auth/login" state={{ from: `/polls/${pollId}/respond` }}>Login to respond</Link>
+            <Link to="/auth/login" state={{ from: `/polls/${pollId}/respond` }}>
+              Login to respond
+            </Link>
           </Button>
         }
       />
@@ -356,10 +367,11 @@ export default function RespondPage() {
               countdown.isUrgent ? "text-destructive font-medium" : "text-muted-foreground",
             ].join(" ")}
           >
-            {countdown.isUrgent
-              ? <AlertTriangle className="h-3.5 w-3.5" />
-              : <Clock className="h-3.5 w-3.5" />
-            }
+            {countdown.isUrgent ? (
+              <AlertTriangle className="h-3.5 w-3.5" />
+            ) : (
+              <Clock className="h-3.5 w-3.5" />
+            )}
             {countdown.isClosed ? "Poll closed" : `Closes in ${countdown.display}`}
           </div>
         </div>
@@ -409,9 +421,15 @@ export default function RespondPage() {
           <div className="pt-2">
             <Button type="submit" className="w-full" size="lg" disabled={submitMutation.isPending}>
               {submitMutation.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</>
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting…
+                </>
               ) : (
-                <><Send className="mr-2 h-4 w-4" />Submit Response</>
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Submit Response
+                </>
               )}
             </Button>
             {poll.isAnonymous && (

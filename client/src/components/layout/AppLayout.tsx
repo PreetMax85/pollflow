@@ -7,14 +7,8 @@
 
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import {
-  LayoutDashboard,
-  PlusCircle,
-  LogOut,
-  BarChart3,
-  Menu,
-  X,
-} from "lucide-react";
+import { LayoutDashboard, PlusCircle, LogOut, BarChart3, Menu, X, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -57,6 +51,7 @@ export default function AppLayout() {
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   // ── Logout ──────────────────────────────────────────────────────────────
   const handleLogout = async () => {
@@ -126,11 +121,26 @@ export default function AppLayout() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-medium">{user?.name}</span>
-                    <span className="text-xs text-muted-foreground truncate">
-                      {user?.email}
-                    </span>
+                    <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="cursor-pointer"
+                >
+                  {theme === "dark" ? (
+                    <>
+                      <Sun className="mr-2 h-4 w-4" />
+                      Light mode
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="mr-2 h-4 w-4" />
+                      Dark mode
+                    </>
+                  )}
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
@@ -150,11 +160,7 @@ export default function AppLayout() {
               onClick={() => setMobileOpen((v) => !v)}
               aria-label="Toggle menu"
             >
-              {mobileOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>

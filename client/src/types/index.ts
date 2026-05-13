@@ -46,7 +46,7 @@ export interface PollQuestion {
 }
 
 export interface Poll {
-  id: string;   // present when Mongoose toJSON transform runs
+  id: string; // present when Mongoose toJSON transform runs
   _id?: string; // present when backend uses .lean() — skips toJSON
   title: string;
   description?: string;
@@ -55,7 +55,7 @@ export interface Poll {
   requiresAuth: boolean;
   isAnonymous: boolean;
   status: PollStatus;
-  expiresAt: string;       // ISO date string
+  expiresAt: string; // ISO date string
   publishedAt?: string;
   totalResponses: number;
   createdAt: string;
@@ -81,7 +81,7 @@ export interface CreatePollInput {
   questions: CreateQuestionInput[];
   requiresAuth: boolean;
   isAnonymous: boolean;
-  expiresAt: string;       // ISO date string
+  expiresAt: string; // ISO date string
 }
 
 // ─── Analytics ────────────────────────────────────────────────────────────────

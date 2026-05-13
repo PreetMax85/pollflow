@@ -97,7 +97,7 @@ export const useSocket = ({
   onPollExpired,
   onRoomJoined,
 }: UseSocketOptions): UseSocketReturn => {
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isConnected, setIsConnected] = useState<boolean>(() => getSocket().connected);
 
   const handlersRef = useRef({
     onResponseCount,
@@ -162,7 +162,6 @@ export const useSocket = ({
     if (!socket.connected) {
       socket.connect();
     } else {
-      setIsConnected(true);
       joinRooms();
     }
 

@@ -683,6 +683,7 @@ JWT_ACCESS_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
 CLIENT_URL=https://pollflow-seven.vercel.app
 BCRYPT_SALT_ROUNDS=10
+RESEND_API_KEY=re_xxxxxxxxxxxx
 ```
 
 **Frontend (`client/`) — set in Vercel dashboard → Environment Variables:**
@@ -702,6 +703,6 @@ The backend's `CLIENT_URL` env var locks CORS to the Vercel production origin �
 ## Known Limitations
 
 - **Railway free tier cold start:** The backend may take a few seconds to respond after inactivity (Railway sleeps free-tier services). The first request after a period of no traffic will be slow.
-- **No email delivery in development:** Forgot-password generates a reset token returned in the API response. In production, an SMTP provider (Resend/SendGrid) is required — configure `SMTP_*` env vars.
+- **Email delivery requires Resend domain verification:** Forgot-password generates a reset token and sends it via Resend. In development without `RESEND_API_KEY`, the reset link is logged to the console and returned in the API response. In production, set `RESEND_API_KEY` and verify a sending domain in Resend's dashboard.
 - **Poll editing is restricted:** Only `active` polls can be edited. Editing does not retroactively affect already-submitted responses.
 - **Anonymous duplicate prevention:** Authenticated polls use DB-level unique index for deduplication. Anonymous polls use IP-based rate limiting — not a hard guarantee against re-submission.

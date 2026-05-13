@@ -17,9 +17,7 @@ export interface SubmitResponseInput {
 export const responsesApi = {
   /** POST /api/v1/polls/:pollId/respond */
   submit: (pollId: string, data: SubmitResponseInput) =>
-    apiClient
-      .post<ApiResponse<null>>(`/polls/${pollId}/respond`, data)
-      .then((r) => r.data),
+    apiClient.post<ApiResponse<null>>(`/polls/${pollId}/respond`, data).then((r) => r.data),
 };
 
 /**

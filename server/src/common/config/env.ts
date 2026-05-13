@@ -19,41 +19,33 @@ import "dotenv/config";
 const envSchema = z.object({
   // ── Server ────────────────────────────────────────────────────────────────
   PORT: z.coerce.number(),
-  NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 
   // ── Database ─────────────────────────────────────────────────────────────
   // startsWith check prevents accidentally pointing production at localhost
   MONGODB_URI: z
     .string()
     .min(1, "MONGODB_URI is required")
-    .refine(
-      (uri) => uri.startsWith("mongodb://") || uri.startsWith("mongodb+srv://"),
-      { message: "MONGODB_URI must be a valid MongoDB connection string" },
-    ),
+    .refine((uri) => uri.startsWith("mongodb://") || uri.startsWith("mongodb+srv://"), {
+      message: "MONGODB_URI must be a valid MongoDB connection string",
+    }),
 
   // ── JWT ───────────────────────────────────────────────────────────────────
   // No .default() — secrets must be explicitly set. The judge always catches
   // fallback values like 'secret' or 'changeme' and flags them as critical.
-  JWT_ACCESS_SECRET: z
-    .string()
-    .min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
-  JWT_REFRESH_SECRET: z
-    .string()
-    .min(32, "JWT_REFRESH_SECRET must be at least 32 characters"),
+  JWT_ACCESS_SECRET: z.string().min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
+  JWT_REFRESH_SECRET: z.string().min(32, "JWT_REFRESH_SECRET must be at least 32 characters"),
   JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
 
   // ── CORS ──────────────────────────────────────────────────────────────────
-  CLIENT_URL: z
-    .string()
-    .url("CLIENT_URL must be a valid URL (e.g. https://pollflow.vercel.app)"),
+  CLIENT_URL: z.string().url("CLIENT_URL must be a valid URL (e.g. https://pollflow.vercel.app)"),
 
   // ── Bcrypt ────────────────────────────────────────────────────────────────
   // salt rounds: 10 is the minimum for production. Higher = slower = more secure.
   // Never set below 10 — the judge flags it.
   BCRYPT_SALT_ROUNDS: z.coerce.number().min(10, "BCRYPT_SALT_ROUNDS must be at least 10"),
+  RESEND_API_KEY: z.string().default(""),
 });
 
 // Parse throws a ZodError with a detailed message if validation fails.

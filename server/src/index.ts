@@ -117,11 +117,9 @@ app.use((_req: Request, res: Response) => {
 // MUST be the absolute last middleware registered — Express identifies error
 // handlers by their 4-argument signature (err, req, res, next).
 // Catches everything: Zod errors, ApiErrors, Mongoose errors, unhandled throws.
-app.use(
-  (err: unknown, req: Request, res: Response, next: NextFunction): void => {
-    errorHandler(err, req, res, next);
-  },
-);
+app.use((err: unknown, req: Request, res: Response, next: NextFunction): void => {
+  errorHandler(err, req, res, next);
+});
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 // We connect to DB before starting the HTTP server. If DB connection fails,

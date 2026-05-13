@@ -43,10 +43,7 @@ export class ResponseRepository {
    * Check if an authenticated user has already responded to a poll.
    * Uses the sparse unique index — O(1) lookup.
    */
-  static async hasUserResponded(
-    pollId: string,
-    userId: string,
-  ): Promise<boolean> {
+  static async hasUserResponded(pollId: string, userId: string): Promise<boolean> {
     const exists = await Response.exists({
       pollId: new Types.ObjectId(pollId),
       respondentId: new Types.ObjectId(userId),
@@ -59,10 +56,7 @@ export class ResponseRepository {
    * Layer 1 of anonymous duplicate prevention (app-level check).
    * Layer 2 is the unique sparse index on (pollId, ipHash).
    */
-  static async hasIpResponded(
-    pollId: string,
-    ipHash: string,
-  ): Promise<boolean> {
+  static async hasIpResponded(pollId: string, ipHash: string): Promise<boolean> {
     const exists = await Response.exists({
       pollId: new Types.ObjectId(pollId),
       ipHash,
@@ -86,5 +80,4 @@ export class ResponseRepository {
   static async deleteByPollId(pollId: string): Promise<void> {
     await Response.deleteMany({ pollId: new Types.ObjectId(pollId) });
   }
-
 }

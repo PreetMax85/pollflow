@@ -3,11 +3,7 @@ import { PollService } from "./poll.service.js";
 import { ApiResponse } from "../../common/utils/ApiResponse.js";
 import { ApiError } from "../../common/utils/ApiError.js";
 import { AuthRequest } from "../../common/middleware/authenticate.middleware.js";
-import {
-  createPollSchema,
-  updatePollSchema,
-  pollListQuerySchema,
-} from "./dtos/poll.dto.js";
+import { createPollSchema, updatePollSchema, pollListQuerySchema } from "./dtos/poll.dto.js";
 
 /**
  * PollController — HTTP boundary layer only.
@@ -61,7 +57,7 @@ export class PollController {
    * The service enforces visibility rules based on poll status and ownership.
    */
   static async getById(req: AuthRequest, res: Response): Promise<void> {
-    const pollId = req.params['pollId'] as string;
+    const pollId = req.params["pollId"] as string;
     if (!pollId) throw ApiError.badRequest("Poll ID is required");
 
     const poll = await PollService.getPollById(pollId, req.user?.userId);
@@ -77,7 +73,7 @@ export class PollController {
     const userId = req.user?.userId;
     if (!userId) throw ApiError.unauthorized("Authentication required");
 
-    const pollId = req.params['pollId'] as string;
+    const pollId = req.params["pollId"] as string;
     if (!pollId) throw ApiError.badRequest("Poll ID is required");
 
     const data = updatePollSchema.parse(req.body);
@@ -94,7 +90,7 @@ export class PollController {
     const userId = req.user?.userId;
     if (!userId) throw ApiError.unauthorized("Authentication required");
 
-    const pollId = req.params['pollId'] as string;
+    const pollId = req.params["pollId"] as string;
     if (!pollId) throw ApiError.badRequest("Poll ID is required");
 
     await PollService.deletePoll(pollId, userId);
@@ -145,7 +141,7 @@ export class PollController {
     const userId = req.user?.userId;
     if (!userId) throw ApiError.unauthorized("Authentication required");
 
-    const pollId = req.params['pollId'] as string;
+    const pollId = req.params["pollId"] as string;
     if (!pollId) throw ApiError.badRequest("Poll ID is required");
 
     const published = await PollService.publishPoll(pollId, userId);

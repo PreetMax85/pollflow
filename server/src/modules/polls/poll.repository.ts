@@ -100,11 +100,9 @@ export class PollRepository {
    */
   static async close(pollId: string): Promise<IPoll | null> {
     if (!Types.ObjectId.isValid(pollId)) return null;
-    return Poll.findByIdAndUpdate(
-      pollId,
-      { $set: { status: "expired" } },
-      { new: true },
-    ).lean({ virtuals: true });
+    return Poll.findByIdAndUpdate(pollId, { $set: { status: "expired" } }, { new: true }).lean({
+      virtuals: true,
+    });
   }
 
   /**

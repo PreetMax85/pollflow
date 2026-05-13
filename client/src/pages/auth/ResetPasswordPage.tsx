@@ -16,13 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { authApi } from "@/api/auth";
 
@@ -30,16 +24,18 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$
 const passwordMessage =
   "Password must contain uppercase, lowercase, number, and special character (@$!%*?&)";
 
-const resetSchema = z.object({
-  newPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters long")
-    .regex(passwordRegex, { message: passwordMessage }),
-  confirmPassword: z.string().min(1, "Please confirm your password"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const resetSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters long")
+      .regex(passwordRegex, { message: passwordMessage }),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 type ResetFormValues = z.infer<typeof resetSchema>;
 
@@ -102,9 +98,7 @@ export default function ResetPasswordPage() {
               <CheckCircle2 className="h-7 w-7 text-green-500" />
             </div>
             <CardTitle className="landing-heading text-xl">Password reset</CardTitle>
-            <CardDescription>
-              Your password has been successfully reset.
-            </CardDescription>
+            <CardDescription>Your password has been successfully reset.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full">
@@ -129,9 +123,7 @@ export default function ResetPasswordPage() {
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="landing-heading text-xl">Set new password</CardTitle>
-            <CardDescription>
-              Enter your new password below.
-            </CardDescription>
+            <CardDescription>Enter your new password below.</CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -161,7 +153,11 @@ export default function ResetPasswordPage() {
                             aria-label={showPassword ? "Hide password" : "Show password"}
                             tabIndex={-1}
                           >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
                           </button>
                         </div>
                       </FormControl>

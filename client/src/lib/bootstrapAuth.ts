@@ -45,10 +45,7 @@ export const bootstrapAuth = async (): Promise<void> => {
       });
 
       if (profileResponse.data.success) {
-        useAuthStore.getState().setAuth(
-          profileResponse.data.data,
-          data.data.accessToken,
-        );
+        useAuthStore.getState().setAuth(profileResponse.data.data, data.data.accessToken);
       } else {
         // /auth/me returned success:false — wipe the orphaned token
         useAuthStore.getState().clearAuth();

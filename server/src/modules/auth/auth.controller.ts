@@ -96,7 +96,7 @@ export class AuthController {
     const data = forgotPasswordSchema.parse(req.body);
     const result = await AuthService.forgotPassword(data);
 
-    ApiResponse.ok(res, result.message);
+    ApiResponse.ok(res, result.message, { mockEmailContent: result.mockEmailContent });
   }
 
   static async resetPassword(req: Request, res: Response): Promise<void> {

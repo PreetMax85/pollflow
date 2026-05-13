@@ -19,7 +19,14 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
 import { pollsApi } from "@/api/polls";
@@ -38,13 +45,15 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full",
         "border-2 border-transparent transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        checked ? "bg-primary" : "bg-input"
+        checked ? "bg-primary" : "bg-input",
       )}
     >
-      <span className={cn(
-        "pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg transition-transform",
-        checked ? "translate-x-5" : "translate-x-0"
-      )} />
+      <span
+        className={cn(
+          "pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg transition-transform",
+          checked ? "translate-x-5" : "translate-x-0",
+        )}
+      />
     </button>
   );
 }
@@ -91,8 +100,11 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
   const { watch, setValue } = useFormContext<EditPollFormValues>();
   const isRequired = watch(`questions.${questionIndex}.isRequired`);
 
-  const { fields: optionFields, append: appendOption, remove: removeOption } =
-    useFieldArray({ control, name: `questions.${questionIndex}.options` });
+  const {
+    fields: optionFields,
+    append: appendOption,
+    remove: removeOption,
+  } = useFieldArray({ control, name: `questions.${questionIndex}.options` });
 
   return (
     <Card className="border-border">
@@ -101,15 +113,24 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
           <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
           <CardTitle className="text-sm font-medium flex-1">Question {questionIndex + 1}</CardTitle>
 
-          <Button type="button" size="icon" variant="ghost" className="h-7 w-7"
-            onClick={() => setCollapsed((v) => !v)}>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={() => setCollapsed((v) => !v)}
+          >
             {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           </Button>
 
           {canRemove && (
-            <Button type="button" size="icon" variant="ghost"
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
               className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={onRemove}>
+              onClick={onRemove}
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
@@ -118,8 +139,14 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
 
       {!collapsed && (
         <CardContent className="space-y-4">
-          <FormField control={control} name={`questions.${questionIndex}.text`}
-            render={({ field }: { field: ControllerRenderProps<EditPollFormValues, `questions.${number}.text`> }) => (
+          <FormField
+            control={control}
+            name={`questions.${questionIndex}.text`}
+            render={({
+              field,
+            }: {
+              field: ControllerRenderProps<EditPollFormValues, `questions.${number}.text`>;
+            }) => (
               <FormItem>
                 <FormLabel className="text-xs">Question text</FormLabel>
                 <FormControl>
@@ -140,24 +167,41 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
             </div>
             <ToggleSwitch
               checked={isRequired ?? true}
-              onChange={(val) => setValue(`questions.${questionIndex}.isRequired`, val, { shouldDirty: true })}
+              onChange={(val) =>
+                setValue(`questions.${questionIndex}.isRequired`, val, { shouldDirty: true })
+              }
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">Options <span className="text-muted-foreground">(min. 2)</span></Label>
+            <Label className="text-xs">
+              Options <span className="text-muted-foreground">(min. 2)</span>
+            </Label>
             {optionFields.map((optionField, optionIndex) => (
-              <FormField key={optionField.id} control={control}
+              <FormField
+                key={optionField.id}
+                control={control}
                 name={`questions.${questionIndex}.options.${optionIndex}.text`}
-                render={({ field }: { field: ControllerRenderProps<EditPollFormValues, `questions.${number}.options.${number}.text`> }) => (
+                render={({
+                  field,
+                }: {
+                  field: ControllerRenderProps<
+                    EditPollFormValues,
+                    `questions.${number}.options.${number}.text`
+                  >;
+                }) => (
                   <FormItem>
                     <FormControl>
                       <div className="flex gap-2">
                         <Input placeholder={`Option ${optionIndex + 1}`} {...field} />
                         {optionFields.length > 2 && (
-                          <Button type="button" size="icon" variant="ghost"
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
                             className="shrink-0 text-muted-foreground hover:text-destructive"
-                            onClick={() => removeOption(optionIndex)}>
+                            onClick={() => removeOption(optionIndex)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
@@ -168,8 +212,13 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
                 )}
               />
             ))}
-            <Button type="button" size="sm" variant="outline" className="w-full border-dashed"
-              onClick={() => appendOption({ text: "" })}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="w-full border-dashed"
+              onClick={() => appendOption({ text: "" })}
+            >
               <PlusCircle className="h-3.5 w-3.5 mr-1.5" /> Add option
             </Button>
           </div>
@@ -185,7 +234,11 @@ export default function EditPollPage() {
   const { pollId } = useParams<{ pollId: string }>();
   const navigate = useNavigate();
 
-  const { data: pollData, isLoading, isError } = useQuery<ApiResponse<Poll>, Error>({
+  const {
+    data: pollData,
+    isLoading,
+    isError,
+  } = useQuery<ApiResponse<Poll>, Error>({
     queryKey: ["poll", pollId],
     queryFn: () => pollsApi.getById(pollId!),
     enabled: !!pollId,
@@ -205,7 +258,14 @@ export default function EditPollPage() {
     },
   });
 
-  const { control, handleSubmit, reset, watch, setValue, formState: { isSubmitting } } = form;
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { isSubmitting },
+  } = form;
 
   useEffect(() => {
     if (!poll) return;
@@ -223,8 +283,11 @@ export default function EditPollPage() {
     });
   }, [poll, reset]);
 
-  const { fields: questionFields, append: appendQuestion, remove: removeQuestion } =
-    useFieldArray({ control, name: "questions" });
+  const {
+    fields: questionFields,
+    append: appendQuestion,
+    remove: removeQuestion,
+  } = useFieldArray({ control, name: "questions" });
 
   const onSubmit = async (values: EditPollFormValues) => {
     if (!pollId) return;
@@ -245,8 +308,8 @@ export default function EditPollPage() {
       navigate("/dashboard");
     } catch (error) {
       const message =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message
-        ?? "Failed to update poll.";
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Failed to update poll.";
       toast.error(message);
     }
   };
@@ -255,11 +318,13 @@ export default function EditPollPage() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <Skeleton className="h-8 w-48" />
-        <Card><CardContent className="space-y-4 pt-6">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </CardContent></Card>
+        <Card>
+          <CardContent className="space-y-4 pt-6">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -289,37 +354,64 @@ export default function EditPollPage() {
 
       <Form {...form}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-
           <Card>
-            <CardHeader><CardTitle className="text-base">Poll details</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">Poll details</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
-              <FormField control={control} name="title"
-                render={({ field }: { field: ControllerRenderProps<EditPollFormValues, "title"> }) => (
+              <FormField
+                control={control}
+                name="title"
+                render={({
+                  field,
+                }: {
+                  field: ControllerRenderProps<EditPollFormValues, "title">;
+                }) => (
                   <FormItem>
                     <FormLabel>Title</FormLabel>
-                    <FormControl><Input placeholder="Poll title" {...field} /></FormControl>
+                    <FormControl>
+                      <Input placeholder="Poll title" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField control={control} name="description"
-                render={({ field }: { field: ControllerRenderProps<EditPollFormValues, "description"> }) => (
+              <FormField
+                control={control}
+                name="description"
+                render={({
+                  field,
+                }: {
+                  field: ControllerRenderProps<EditPollFormValues, "description">;
+                }) => (
                   <FormItem>
                     <FormLabel>
                       Description{" "}
                       <span className="text-muted-foreground font-normal">(optional)</span>
                     </FormLabel>
-                    <FormControl><Textarea rows={3} {...field} /></FormControl>
+                    <FormControl>
+                      <Textarea rows={3} {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField control={control} name="expiresAt"
-                render={({ field }: { field: ControllerRenderProps<EditPollFormValues, "expiresAt"> }) => (
+              <FormField
+                control={control}
+                name="expiresAt"
+                render={({
+                  field,
+                }: {
+                  field: ControllerRenderProps<EditPollFormValues, "expiresAt">;
+                }) => (
                   <FormItem>
                     <FormLabel>Closes at</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" min={new Date().toISOString().slice(0, 16)} {...field} />
+                      <Input
+                        type="datetime-local"
+                        min={new Date().toISOString().slice(0, 16)}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -330,7 +422,9 @@ export default function EditPollPage() {
 
           {/* Settings — ToggleSwitch with watch/setValue directly, no FormField needed */}
           <Card>
-            <CardHeader><CardTitle className="text-base">Settings</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">Settings</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -376,22 +470,42 @@ export default function EditPollPage() {
                 canRemove={questionFields.length > 1}
               />
             ))}
-            <Button type="button" variant="outline" className="w-full border-dashed"
-              onClick={() => appendQuestion({ text: "", isRequired: true, options: [{ text: "" }, { text: "" }] })}>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-dashed"
+              onClick={() =>
+                appendQuestion({
+                  text: "",
+                  isRequired: true,
+                  options: [{ text: "" }, { text: "" }],
+                })
+              }
+            >
               <PlusCircle className="h-4 w-4 mr-2" /> Add question
             </Button>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}
-              disabled={isSubmitting}>Cancel</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/dashboard")}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting
-                ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</>
-                : "Save changes"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                "Save changes"
+              )}
             </Button>
           </div>
-
         </form>
       </Form>
     </div>

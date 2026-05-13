@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import { ErrorBoundary } from "react-error-boundary";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
 import { router } from "@/router";
 import { bootstrapAuth } from "@/lib/bootstrapAuth";
 import "./index.css";
@@ -58,8 +59,10 @@ bootstrapAuth().finally(() => {
     <StrictMode>
       <ErrorBoundary FallbackComponent={AppErrorFallback}>
         <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-          <Toaster position="top-right" richColors closeButton />
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <RouterProvider router={router} />
+            <Toaster position="top-right" richColors closeButton />
+          </ThemeProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </StrictMode>,

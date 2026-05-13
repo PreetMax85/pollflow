@@ -48,8 +48,8 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: true,     // creates a unique index — duplicate email → MongoServerError code 11000
-      lowercase: true,  // always stored lowercase; normalized at the DB layer
+      unique: true, // creates a unique index — duplicate email → MongoServerError code 11000
+      lowercase: true, // always stored lowercase; normalized at the DB layer
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
     },
@@ -105,9 +105,11 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
  *   const user = await User.findById(id);
  *   return user.toSafeObject();
  */
-userSchema.methods.toSafeObject = function (
-  this: IUser,
-): { id: string; name: string; email: string } {
+userSchema.methods.toSafeObject = function (this: IUser): {
+  id: string;
+  name: string;
+  email: string;
+} {
   return {
     id: this._id.toString(),
     name: this.name,

@@ -38,18 +38,10 @@ router.delete("/:pollId", requireAuth, asyncHandler(PollController.deletePoll));
 router.post("/:pollId/close", requireAuth, asyncHandler(PollController.close));
 
 // POST /api/v1/polls/:pollId/publish — publish final results
-router.post(
-  "/:pollId/publish",
-  requireAuth,
-  asyncHandler(PollController.publish),
-);
+router.post("/:pollId/publish", requireAuth, asyncHandler(PollController.publish));
 
 // POST /api/v1/polls/:pollId/duplicate — duplicate a poll
-router.post(
-  "/:pollId/duplicate",
-  requireAuth,
-  asyncHandler(PollController.duplicate),
-);
+router.post("/:pollId/duplicate", requireAuth, asyncHandler(PollController.duplicate));
 
 // ── Public operations (optionalAuth — service enforces visibility) ─────────────
 

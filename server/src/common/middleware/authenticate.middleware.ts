@@ -4,7 +4,6 @@ import { ApiError } from "../utils/ApiError.js";
 import { verifyAccessToken } from "../utils/jwt.js";
 import type { TokenPayload } from "../utils/jwt.js";
 
-
 // Extend the Express Request to include our user payload
 export interface AuthRequest extends Request {
   user?: TokenPayload;

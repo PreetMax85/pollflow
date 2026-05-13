@@ -3,11 +3,7 @@ import { PollRepository } from "./poll.repository.js";
 import { ResponseRepository } from "../responses/response.repository.js";
 import { ApiError } from "../../common/utils/ApiError.js";
 import { emitPollPublished, emitPollExpired } from "../../socket/socket.js";
-import {
-  CreatePollInput,
-  UpdatePollInput,
-  PollListQuery,
-} from "./dtos/poll.dto.js";
+import { CreatePollInput, UpdatePollInput, PollListQuery } from "./dtos/poll.dto.js";
 
 /**
  * PollService — all business logic for poll lifecycle management.
@@ -23,10 +19,7 @@ export class PollService {
   /**
    * Create a new poll owned by the authenticated user.
    */
-  static async createPoll(
-    data: CreatePollInput,
-    userId: string,
-  ): Promise<IPoll> {
+  static async createPoll(data: CreatePollInput, userId: string): Promise<IPoll> {
     return PollRepository.create(data, userId);
   }
 
@@ -38,19 +31,14 @@ export class PollService {
    * - Expired polls: visible only to the creator
    * - Published polls: visible to everyone (results mode)
    */
-  static async getPollById(
-    pollId: string,
-    requestingUserId?: string,
-  ): Promise<IPoll> {
+  static async getPollById(pollId: string, requestingUserId?: string): Promise<IPoll> {
     const poll = await PollRepository.findById(pollId);
 
     if (!poll) {
       throw ApiError.notFound("Poll not found");
     }
 
-    const isCreator =
-      requestingUserId &&
-      poll.createdBy.toString() === requestingUserId;
+    const isCreator = requestingUserId && poll.createdBy.toString() === requestingUserId;
 
     // Lazy expiry: check if poll is overdue but status hasn't been swept yet
     if (poll.status === "active" && poll.expiresAt <= new Date()) {
@@ -58,17 +46,13 @@ export class PollService {
         console.error("[PollService] Expiry sweep failed:", e),
       );
       if (!isCreator) {
-        throw ApiError.forbidden(
-          "This poll has expired and is no longer publicly accessible",
-        );
+        throw ApiError.forbidden("This poll has expired and is no longer publicly accessible");
       }
     }
 
     // Expired polls are private — only the creator can view them for analytics
     if (poll.status === "expired" && !isCreator) {
-      throw ApiError.forbidden(
-        "This poll has expired and is no longer publicly accessible",
-      );
+      throw ApiError.forbidden("This poll has expired and is no longer publicly accessible");
     }
 
     return poll;
@@ -93,11 +77,7 @@ export class PollService {
    * - Active polls only (can't edit expired/published)
    * - Questions are immutable — only title, description, expiresAt can change
    */
-  static async updatePoll(
-    pollId: string,
-    data: UpdatePollInput,
-    userId: string,
-  ): Promise<IPoll> {
+  static async updatePoll(pollId: string, data: UpdatePollInput, userId: string): Promise<IPoll> {
     const poll = await PollRepository.findById(pollId);
 
     if (!poll) throw ApiError.notFound("Poll not found");
@@ -132,9 +112,7 @@ export class PollService {
     if (!poll) throw ApiError.notFound("Poll not found");
 
     if (poll.createdBy.toString() !== userId) {
-      throw ApiError.forbidden(
-        "You do not have permission to delete this poll",
-      );
+      throw ApiError.forbidden("You do not have permission to delete this poll");
     }
 
     // Cascade: delete all associated responses first
@@ -170,9 +148,7 @@ export class PollService {
         .map((q) => ({
           text: q.text,
           isRequired: q.isRequired,
-          options: [...q.options]
-            .sort((a, b) => a.order - b.order)
-            .map((o) => ({ text: o.text })),
+          options: [...q.options].sort((a, b) => a.order - b.order).map((o) => ({ text: o.text })),
         })),
     };
 
@@ -223,9 +199,7 @@ export class PollService {
     if (!poll) throw ApiError.notFound("Poll not found");
 
     if (poll.createdBy.toString() !== userId) {
-      throw ApiError.forbidden(
-        "You do not have permission to publish this poll",
-      );
+      throw ApiError.forbidden("You do not have permission to publish this poll");
     }
 
     if (poll.status === "published") {
@@ -286,21 +260,15 @@ export class PollService {
         console.error("[PollService] Expiry sweep failed:", e),
       );
       emitPollExpired(pollId);
-      throw ApiError.badRequest(
-        "This poll has expired and is no longer accepting responses",
-      );
+      throw ApiError.badRequest("This poll has expired and is no longer accepting responses");
     }
 
     if (poll.status === "expired") {
-      throw ApiError.badRequest(
-        "This poll has expired and is no longer accepting responses",
-      );
+      throw ApiError.badRequest("This poll has expired and is no longer accepting responses");
     }
 
     if (poll.status === "published") {
-      throw ApiError.badRequest(
-        "This poll has been closed and results have been published",
-      );
+      throw ApiError.badRequest("This poll has been closed and results have been published");
     }
 
     return poll;

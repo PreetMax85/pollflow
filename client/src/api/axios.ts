@@ -1,5 +1,5 @@
 /**
-*
+ *
  * Configured Axios instance for all API communication.
  *
  * ┌─────────────────────────────────────────────────────────────────────────┐
@@ -16,11 +16,7 @@
  * └─────────────────────────────────────────────────────────────────────────┘
  */
 
-import axios, {
-  type AxiosError,
-  type AxiosResponse,
-  type InternalAxiosRequestConfig,
-} from "axios";
+import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/useAuthStore";
 
 // ─── Base Configuration ───────────────────────────────────────────────────────

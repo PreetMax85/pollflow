@@ -1,4 +1,3 @@
-
 import { apiClient } from "@/api/axios";
 import type { ApiResponse, AuthResponseData } from "@/types";
 
@@ -19,17 +18,12 @@ export interface RegisterInput {
 
 export const authApi = {
   login: (data: LoginInput) =>
-    apiClient
-      .post<ApiResponse<AuthResponseData>>("/auth/login", data)
-      .then((res) => res.data),
+    apiClient.post<ApiResponse<AuthResponseData>>("/auth/login", data).then((res) => res.data),
 
   register: (data: RegisterInput) =>
-    apiClient
-      .post<ApiResponse<AuthResponseData>>("/auth/register", data)
-      .then((res) => res.data),
+    apiClient.post<ApiResponse<AuthResponseData>>("/auth/register", data).then((res) => res.data),
 
-  logout: () =>
-    apiClient.post("/auth/logout").then((res) => res.data),
+  logout: () => apiClient.post("/auth/logout").then((res) => res.data),
 
   forgotPassword: (email: string) =>
     apiClient

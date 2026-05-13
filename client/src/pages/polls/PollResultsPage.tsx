@@ -11,12 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BarChart3, Users, ArrowLeft, Globe, ImageDown, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,13 +23,7 @@ import type { QuestionAnalytics, PublishedResults, ApiResponse } from "@/types";
 
 // ─── Question result card ─────────────────────────────────────────────────────
 
-function QuestionResultCard({
-  question,
-  index,
-}: {
-  question: QuestionAnalytics;
-  index: number;
-}) {
+function QuestionResultCard({ question, index }: { question: QuestionAnalytics; index: number }) {
   const sorted = [...question.options].sort((a, b) => b.count - a.count);
 
   return (
@@ -64,9 +53,7 @@ function QuestionResultCard({
         ))}
 
         {question.totalAnswers === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-2">
-            No answers recorded
-          </p>
+          <p className="text-sm text-muted-foreground text-center py-2">No answers recorded</p>
         )}
       </CardContent>
     </Card>
@@ -142,8 +129,7 @@ export default function PollResultsPage() {
             </div>
             <h2 className="landing-heading text-lg font-semibold">Results not available</h2>
             <p className="text-sm text-muted-foreground max-w-sm">
-              These results haven&apos;t been published yet, or the poll doesn&apos;t
-              exist.
+              These results haven&apos;t been published yet, or the poll doesn&apos;t exist.
             </p>
             <Button variant="outline" asChild>
               <Link to="/">
@@ -162,9 +148,7 @@ export default function PollResultsPage() {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="h-4 w-4" />
                 <span>
-                  <span className="font-medium text-foreground">
-                    {analytics.totalResponses}
-                  </span>{" "}
+                  <span className="font-medium text-foreground">{analytics.totalResponses}</span>{" "}
                   total response{analytics.totalResponses !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -174,10 +158,17 @@ export default function PollResultsPage() {
                 onClick={() => void exportCard()}
                 disabled={isExporting}
               >
-                {isExporting
-                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating…</>
-                  : <><ImageDown className="mr-2 h-4 w-4" />Download results card</>
-                }
+                {isExporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating…
+                  </>
+                ) : (
+                  <>
+                    <ImageDown className="mr-2 h-4 w-4" />
+                    Download results card
+                  </>
+                )}
               </Button>
             </div>
 
@@ -186,12 +177,15 @@ export default function PollResultsPage() {
               style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}
               aria-hidden="true"
             >
-              <ResultsCard ref={cardRef} data={{
-                pollTitle: analytics.pollTitle,
-                totalResponses: analytics.totalResponses,
-                questions: analytics.questions,
-                publishedAt: analytics.publishedAt,
-              }} />
+              <ResultsCard
+                ref={cardRef}
+                data={{
+                  pollTitle: analytics.pollTitle,
+                  totalResponses: analytics.totalResponses,
+                  questions: analytics.questions,
+                  publishedAt: analytics.publishedAt,
+                }}
+              />
             </div>
 
             {/* Question cards */}

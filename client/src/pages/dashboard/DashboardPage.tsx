@@ -29,13 +29,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -89,7 +83,16 @@ interface PollCardProps {
   isDuplicating: boolean;
 }
 
-function PollCard({ poll, onDelete, onDuplicate, onClose, onPublish, isClosing, isPublishing, isDuplicating }: PollCardProps) {
+function PollCard({
+  poll,
+  onDelete,
+  onDuplicate,
+  onClose,
+  onPublish,
+  isClosing,
+  isPublishing,
+  isDuplicating,
+}: PollCardProps) {
   const navigate = useNavigate();
   const status = STATUS_CONFIG[poll.status];
   const expiryDate = new Date(poll.expiresAt);
@@ -104,21 +107,14 @@ function PollCard({ poll, onDelete, onDuplicate, onClose, onPublish, isClosing, 
     <Card className="flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base leading-snug line-clamp-2">
-            {poll.title}
-          </CardTitle>
-          <Badge
-            variant={status.variant}
-            className="flex items-center gap-1 shrink-0 text-xs"
-          >
+          <CardTitle className="text-base leading-snug line-clamp-2">{poll.title}</CardTitle>
+          <Badge variant={status.variant} className="flex items-center gap-1 shrink-0 text-xs">
             {status.icon}
             {status.label}
           </Badge>
         </div>
         {poll.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-            {poll.description}
-          </p>
+          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{poll.description}</p>
         )}
       </CardHeader>
 
@@ -134,7 +130,9 @@ function PollCard({ poll, onDelete, onDuplicate, onClose, onPublish, isClosing, 
               ? `Expired ${formatDistanceToNow(expiryDate, { addSuffix: true })}`
               : `Expires ${formatDistanceToNow(expiryDate, { addSuffix: true })}`}
           </span>
-          <span>{poll.questions.length} question{poll.questions.length !== 1 ? "s" : ""}</span>
+          <span>
+            {poll.questions.length} question{poll.questions.length !== 1 ? "s" : ""}
+          </span>
         </div>
       </CardContent>
 
@@ -186,12 +184,7 @@ function PollCard({ poll, onDelete, onDuplicate, onClose, onPublish, isClosing, 
 
         {/* Close — only while active, stops accepting responses */}
         {poll.status === "active" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onClose(poll)}
-            disabled={isClosing}
-          >
+          <Button size="sm" variant="outline" onClick={() => onClose(poll)} disabled={isClosing}>
             {isClosing ? (
               <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
             ) : (
@@ -324,9 +317,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="landing-heading text-2xl font-bold tracking-tight">My Polls</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Welcome back, {user?.name}
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Welcome back, {user?.name}</p>
         </div>
         <Button asChild>
           <Link to="/polls/create">
@@ -386,16 +377,13 @@ export default function DashboardPage() {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={pollToDelete !== null}
-        onOpenChange={(open) => !open && setPollToDelete(null)}
-      >
+      <Dialog open={pollToDelete !== null} onOpenChange={(open) => !open && setPollToDelete(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete poll?</DialogTitle>
             <DialogDescription>
-              This will permanently delete &ldquo;{pollToDelete?.title}&rdquo;
-              and all its responses. This cannot be undone.
+              This will permanently delete &ldquo;{pollToDelete?.title}&rdquo; and all its
+              responses. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -409,9 +397,7 @@ export default function DashboardPage() {
                 if (pollToDelete) deleteMutation.mutate(getPollId(pollToDelete));
               }}
             >
-              {deleteMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
+              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Delete
             </Button>
           </DialogFooter>

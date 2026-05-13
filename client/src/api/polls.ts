@@ -20,8 +20,7 @@ interface MyPollsData {
 
 export const pollsApi = {
   /** Private — GET /api/v1/polls/my */
-  getMyPolls: () =>
-    apiClient.get<ApiResponse<MyPollsData>>("/polls/my").then((r) => r.data),
+  getMyPolls: () => apiClient.get<ApiResponse<MyPollsData>>("/polls/my").then((r) => r.data),
 
   /**
    * PUBLIC — GET /api/v1/polls/:pollId

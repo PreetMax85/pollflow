@@ -27,9 +27,9 @@ export class ResponseService {
   static async submitResponse(params: {
     pollId: string;
     answers: SubmitResponseInput["answers"];
-    userId?: string;       // undefined = anonymous / unauthenticated
+    userId?: string; // undefined = anonymous / unauthenticated
     ipAddress?: string;
-    ipHash?: string;       // SHA-256 of IP for anonymous duplicate prevention
+    ipHash?: string; // SHA-256 of IP for anonymous duplicate prevention
   }): Promise<{ message: string; responseId: string }> {
     const { pollId, answers, userId, ipAddress, ipHash } = params;
 
@@ -41,9 +41,7 @@ export class ResponseService {
     // This check happens BEFORE duplicate detection so error messages don't
     // leak information about whether anonymous users have responded.
     if (poll.requiresAuth && !userId) {
-      throw ApiError.unauthorized(
-        "This poll requires you to be logged in to submit a response",
-      );
+      throw ApiError.unauthorized("This poll requires you to be logged in to submit a response");
     }
 
     // ── Step 3: Duplicate response prevention ────────────────────────────────
@@ -55,25 +53,15 @@ export class ResponseService {
     // Anonymous:     unique sparse index on (pollId, ipHash)
 
     if (userId) {
-      const alreadyResponded = await ResponseRepository.hasUserResponded(
-        pollId,
-        userId,
-      );
+      const alreadyResponded = await ResponseRepository.hasUserResponded(pollId, userId);
       if (alreadyResponded) {
-        throw ApiError.conflict(
-          "You have already submitted a response to this poll",
-        );
+        throw ApiError.conflict("You have already submitted a response to this poll");
       }
     } else if (ipHash) {
       // Anonymous duplicate prevention: check by IP hash
-      const alreadyResponded = await ResponseRepository.hasIpResponded(
-        pollId,
-        ipHash,
-      );
+      const alreadyResponded = await ResponseRepository.hasIpResponded(pollId, ipHash);
       if (alreadyResponded) {
-        throw ApiError.conflict(
-          "A response has already been submitted from this device",
-        );
+        throw ApiError.conflict("A response has already been submitted from this device");
       }
     }
 
@@ -119,10 +107,7 @@ export class ResponseService {
    * This runs entirely in memory — no extra DB queries.
    * The poll document (with embedded questions/options) is already loaded.
    */
-  private static validateAnswers(
-    poll: IPoll,
-    answers: SubmitResponseInput["answers"],
-  ): void {
+  private static validateAnswers(poll: IPoll, answers: SubmitResponseInput["answers"]): void {
     // Build lookup maps from the poll's embedded data
     // Map<questionId, Set<optionId>>
     const questionOptionMap = new Map<string, Set<string>>();
@@ -145,9 +130,7 @@ export class ResponseService {
 
       // Validation 1: questionId must exist in this poll
       if (!questionOptionMap.has(questionId)) {
-        throw ApiError.badRequest(
-          `Question "${questionId}" does not belong to this poll`,
-        );
+        throw ApiError.badRequest(`Question "${questionId}" does not belong to this poll`);
       }
 
       // Validation 3: optionId must belong to this question
@@ -173,9 +156,7 @@ export class ResponseService {
     for (const requiredId of requiredQuestionIds) {
       if (!submittedMap.has(requiredId)) {
         // Find the question text for a human-readable error
-        const question = poll.questions.find(
-          (q) => q._id.toString() === requiredId,
-        );
+        const question = poll.questions.find((q) => q._id.toString() === requiredId);
         missingRequired.push(question?.text ?? requiredId);
       }
     }

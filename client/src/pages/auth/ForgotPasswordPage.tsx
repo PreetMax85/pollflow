@@ -16,13 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { authApi } from "@/api/auth";
 
@@ -103,9 +97,7 @@ export default function ForgotPasswordPage() {
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="landing-heading text-xl">Forgot password?</CardTitle>
-            <CardDescription>
-              Enter your email and we'll send you a reset link.
-            </CardDescription>
+            <CardDescription>Enter your email and we'll send you a reset link.</CardDescription>
           </CardHeader>
 
           <CardContent>

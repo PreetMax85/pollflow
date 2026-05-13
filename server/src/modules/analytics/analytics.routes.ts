@@ -14,16 +14,9 @@ import { requireAuth } from "../../common/middleware/authenticate.middleware.js"
 const router = Router();
 
 // Creator dashboard — full analytics with timeline and anonymous breakdown
-router.get(
-  "/:pollId",
-  requireAuth,
-  asyncHandler(AnalyticsController.getAnalytics),
-);
+router.get("/:pollId", requireAuth, asyncHandler(AnalyticsController.getAnalytics));
 
 // Public results page — no auth, but service checks poll.status === "published"
-router.get(
-  "/:pollId/results",
-  asyncHandler(AnalyticsController.getPublishedResults),
-);
+router.get("/:pollId/results", asyncHandler(AnalyticsController.getPublishedResults));
 
 export { router as analyticsRoutes };
