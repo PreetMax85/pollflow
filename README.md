@@ -1,0 +1,625 @@
+# PollFlow
+
+> A production-grade full-stack polling and feedback platform. Create polls, collect anonymous or authenticated responses, view real-time analytics, and publish final results — all through a clean, fast interface backed by a robust REST API.
+
+**Live Demo:** [pollflow.tech](https://pollflow.tech)
+**API Base URL:** [api.pollflow.tech/api/v1](https://api.pollflow.tech/api/v1)
+**Health Check:** [api.pollflow.tech/health](https://api.pollflow.tech/health)
+
+---
+
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Tech Stack](#tech-stack)
+- [Backend](#backend)
+  - [Architecture](#architecture)
+  - [Folder Structure](#folder-structure)
+  - [Database Design](#database-design)
+  - [Authentication System](#authentication-system)
+  - [API Reference](#api-reference)
+  - [Real-Time System](#real-time-system)
+  - [Analytics Pipeline](#analytics-pipeline)
+  - [Security Measures](#security-measures)
+  - [Backend Setup](#backend-setup)
+- [Frontend](#frontend)
+  - [Architecture](#frontend-architecture)
+  - [Folder Structure](#frontend-folder-structure)
+  - [Key Technical Decisions](#key-technical-decisions)
+  - [Pages](#pages)
+  - [Frontend Setup](#frontend-setup)
+- [Deployment](#deployment)
+- [Known Limitations](#known-limitations)
+
+---
+
+## Project Overview
+
+PollFlow allows users to:
+
+- **Create polls** with multiple questions, each having multiple single-select options
+- **Configure** each question as mandatory or optional, and set a poll expiry time
+- **Choose response mode** — anonymous (no attribution) or authenticated (respondent identified)
+- **Share a public link** — anyone can respond, or restrict to logged-in users only
+- **View live analytics** — response counts and option breakdowns update in real time via WebSockets as submissions come in
+- **Publish results** — once closed, creators publish final results viewable by anyone on the same link
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, TypeScript (strict), Vite, Tailwind CSS v4, shadcn/ui |
+| State | Zustand (auth store, token in memory — never localStorage) |
+| Data fetching | TanStack Query v5 |
+| Forms | React Hook Form + Zod resolvers |
+| Charts | Recharts |
+| Real-time (client) | Socket.io-client |
+| Backend | Node.js, Express 5, TypeScript (strict) |
+| Database | MongoDB Atlas (Mongoose ODM) |
+| Real-time (server) | Socket.io (poll rooms, typed events) |
+| Auth | JWT dual-token (access 15m / refresh 7d), httpOnly cookie, token blocklist |
+| Validation | Zod (server + client) |
+| Deployment | DigitalOcean Droplet (nginx + PM2) + Vercel |
+
+---
+
+## Backend
+
+### Architecture
+
+The backend follows a strict **4-layer modular architecture**. Every module (auth, polls, responses, analytics) follows the same pattern — no exceptions:
+
+```
+Route → Controller → Service → Repository → MongoDB
+```
+
+| Layer | Responsibility | What it must NOT do |
+|---|---|---|
+| **Route** | Register HTTP method + path, apply middleware | Any logic |
+| **Controller** | Parse input (Zod), call service, return response | Business logic, DB calls |
+| **Service** | All business rules, orchestration, auth checks | Direct DB calls |
+| **Repository** | All Mongoose calls, data shaping | Business logic, ApiErrors |
+
+This separation means:
+- Swapping MongoDB for another DB only touches the repository layer
+- Business rules are testable without HTTP context
+- Controllers are pure input/output with zero logic — readable at a glance
+
+Every controller is wrapped in `asyncHandler` — a single wrapper that catches any thrown error and forwards it to the global error handler. Zero duplicated try/catch blocks across the codebase.
+
+---
+
+### Folder Structure
+
+```
+pollflow/
+├── client/                          # React frontend (deployed to Vercel)
+│   └── src/
+│       ├── api/                     # Axios instance + typed API functions
+│       ├── components/ui/           # shadcn/ui auto-generated components
+│       ├── hooks/                   # useSocket, useAuth, usePoll
+│       ├── pages/                   # auth/, dashboard/, polls/, respond/
+│       ├── store/                   # Zustand stores (auth token in memory)
+│       └── types/                   # Shared TypeScript interfaces
+│
+└── server/                          # Express API (deployed to DigitalOcean)
+    └── src/
+        ├── common/
+        │   ├── config/
+        │   │   └── env.ts           # Zod-validated env — crashes fast on missing vars
+        │   ├── db/
+        │   │   └── index.ts         # Mongoose connection + graceful shutdown
+        │   ├── middleware/
+        │   │   ├── authenticate.middleware.ts      # requireAuth — verifies + blocklist check
+        │   │   ├── optional-auth.middleware.ts     # optionalAuth — attaches user if present
+        │   │   ├── error.middleware.ts             # Global error handler (last app.use)
+        │   │   └── rate-limit.ts                  # Per-route rate limiters
+        │   └── utils/
+        │       ├── ApiError.ts          # Typed error class with factory methods
+        │       ├── ApiResponse.ts       # Consistent response shape
+        │       ├── async-handler.ts     # Wraps async controllers, forwards errors
+        │       └── jwt.ts               # Token generation, verification, jti injection
+        │
+        └── modules/
+            ├── auth/
+            │   ├── user.schema.ts             # Mongoose User model
+            │   ├── token-blocklist.schema.ts  # Revoked JTIs with TTL index
+            │   ├── dtos/auth.dto.ts           # Zod schemas for all auth inputs
+            │   ├── auth.repository.ts
+            │   ├── auth.service.ts
+            │   ├── auth.controller.ts
+            │   └── auth.routes.ts
+            ├── polls/
+            │   ├── poll.schema.ts             # Poll + embedded questions/options
+            │   ├── poll.dto.ts
+            │   ├── poll.repository.ts
+            │   ├── poll.service.ts
+            │   ├── poll.controller.ts
+            │   └── poll.routes.ts
+            ├── responses/
+            │   ├── response.schema.ts         # Sparse unique index for dedup
+            │   ├── response.dto.ts
+            │   ├── response.repository.ts
+            │   ├── response.service.ts        # Core validation + socket emit
+            │   ├── response.controller.ts
+            │   └── response.routes.ts
+            └── analytics/
+                ├── analytics.service.ts       # MongoDB aggregation pipelines
+                ├── analytics.controller.ts
+                └── analytics.routes.ts
+```
+
+---
+
+### Database Design
+
+#### Schema Strategy: Hybrid Embed + Reference
+
+| Collection | Strategy | Reason |
+|---|---|---|
+| `users` | Standalone | Independent entity, queried by email/id |
+| `polls` | Embed questions + options | Questions have no meaning outside their poll. One atomic read fetches the entire structure. Never exceeds 16MB document limit. |
+| `responses` | Separate collection | Grow unboundedly, queried independently for analytics, aggregation pipelines need them as top-level documents |
+| `tokenblocklists` | Separate collection | TTL-indexed, auto-deleted at token expiry time |
+
+#### Collections
+
+**`users`**
+```
+_id, name, email (unique), password (bcrypt), resetToken?, resetTokenExpiresAt?, timestamps
+```
+
+**`polls`**
+```
+_id, title, description?, createdBy (ref: User), requiresAuth, isAnonymous,
+status (active|expired|published), expiresAt, publishedAt?, totalResponses,
+questions: [{ _id, text, isRequired, order, options: [{ _id, text, order }] }],
+timestamps
+
+Indexes:
+  - createdBy: 1                     (get my polls)
+  - createdBy: 1, createdAt: -1      (my polls sorted newest first)
+  - status: 1, expiresAt: 1          (expiry sweep)
+```
+
+**`responses`**
+```
+_id, pollId (ref: Poll), respondentId? (ref: User, sparse),
+answers: [{ questionId, optionId }], isAnonymous, ipAddress (select: false),
+submittedAt, createdAt
+
+Indexes:
+  - pollId: 1                                         (all analytics queries)
+  - pollId: 1, respondentId: 1 (unique, sparse)       (duplicate prevention)
+  - pollId: 1, submittedAt: -1                        (timeline aggregation)
+```
+
+**`tokenblocklists`**
+```
+_id, jti (unique), userId, expiresAt, createdAt
+
+Indexes:
+  - jti: 1 (unique)           (O(1) revocation check on every request)
+  - expiresAt: 1 (TTL: 0)    (auto-deleted by MongoDB at expiry time)
+```
+
+#### Why a separate `responses` collection instead of embedding in polls?
+
+Embedding responses inside the poll document would hit MongoDB's 16MB document limit at ~50,000 responses. More importantly, analytics aggregations (`$unwind`, `$group`, `$facet`) require responses to be top-level documents — they cannot efficiently process deeply nested arrays at scale.
+
+#### Duplicate Response Prevention
+
+The unique sparse compound index `{ pollId: 1, respondentId: 1 }` on the responses collection enforces one response per authenticated user per poll at the database level. `sparse: true` is critical — it means the index only tracks documents where `respondentId` exists, so anonymous submissions (no respondentId) don't trigger false uniqueness conflicts against each other.
+
+---
+
+### Authentication System
+
+PollFlow implements a **dual-token architecture** with full token lifecycle management:
+
+```
+Login → Access Token (15m, in React memory) + Refresh Token (7d, httpOnly cookie)
+         ↓                                          ↓
+   Authorization: Bearer <token>            Sent automatically by browser
+         ↓                                          ↓
+   requireAuth middleware               POST /auth/refresh → new token pair
+         ↓
+   Check TokenBlocklist (jti)
+         ↓
+   req.user = decoded payload
+```
+
+#### Token Security Details
+
+| Feature | Implementation |
+|---|---|
+| **Access token storage** | Zustand memory only — wiped on tab close. Never localStorage. |
+| **Refresh token storage** | httpOnly cookie, `secure: true` in production, `sameSite: none` for cross-domain |
+| **Token type claim** | Every token carries `type: "access" \| "refresh"` — prevents token confusion attacks |
+| **JTI (JWT ID)** | Every token has a unique `jti` (UUID v4) — enables per-token revocation |
+| **Token blocklist** | On logout, access token's `jti` is stored in MongoDB with TTL = token expiry. Checked on every authenticated request. |
+| **Token rotation** | Refresh endpoint issues both a new access token AND a new refresh token — old refresh token is invalidated |
+| **Anti-enumeration** | Login returns identical error for "user not found" and "wrong password" |
+| **Refresh on load** | `bootstrapAuth` fires on every page load — hits `/auth/refresh`, repopulates Zustand with fresh access token from the surviving httpOnly cookie |
+
+#### `optionalAuth` Middleware
+
+A custom middleware that reads and verifies a Bearer token if present, but silently continues without error if absent. Used on the poll response submission endpoint — this single endpoint correctly handles both anonymous guests and authenticated users without code duplication.
+
+```
+POST /polls/:pollId/respond
+  → optionalAuth
+  → req.user = decoded payload (if token valid)
+  → req.user = undefined      (if no token or invalid)
+  → ResponseService checks:
+      if poll.requiresAuth && !req.user → 401
+      if req.user → duplicate check applies
+      if !req.user → anonymous path, IP stored for rate limiting
+```
+
+---
+
+### API Reference
+
+All endpoints are versioned under `/api/v1`.
+
+#### Auth — `/api/v1/auth`
+
+| Method | Path | Auth | Rate Limit | Description |
+|---|---|---|---|---|
+| POST | `/register` | — | 5/hr | Register new user |
+| POST | `/login` | — | 10/15m | Login, returns access token + sets cookie |
+| POST | `/logout` | ✅ Required | — | Blocklists jti, clears cookie |
+| POST | `/refresh` | — | 30/15m | Rotates both tokens |
+| GET | `/me` | ✅ Required | — | Get current user profile |
+| POST | `/forgot-password` | — | 3/hr | Sends reset token |
+| POST | `/reset-password` | — | 3/hr | Consumes reset token, updates password |
+
+#### Polls — `/api/v1/polls`
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/` | ✅ Required | Create a poll |
+| GET | `/my` | ✅ Required | Get creator's polls |
+| GET | `/:pollId` | Optional | Get poll by ID (visibility rules apply) |
+| PATCH | `/:pollId` | ✅ Required | Update title/description/expiresAt |
+| DELETE | `/:pollId` | ✅ Required | Delete poll |
+| POST | `/:pollId/publish` | ✅ Required | Publish final results |
+
+#### Responses — `/api/v1/polls`
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/:pollId/respond` | Optional | Submit a response (anonymous or authenticated) |
+
+#### Analytics — `/api/v1/analytics`
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/:pollId` | ✅ Required | Full analytics dashboard (creator only) |
+| GET | `/:pollId/results` | — | Published results (public, poll must be published) |
+
+#### Standard Response Shape
+
+All responses follow a consistent envelope:
+
+```json
+{ "success": true, "message": "...", "data": { } }
+{ "success": false, "error": "Human-readable error message" }
+```
+
+---
+
+### Real-Time System
+
+Socket.io is used for live updates on two pages:
+- **Poll-taking page** — respondents see a live response counter
+- **Analytics dashboard** — creator sees option counts and percentages update in real time
+
+#### Room Architecture
+
+```
+Client navigates to /polls/:pollId
+  → emits "join:poll" with pollId
+  → server: socket.join(`poll:${pollId}`)
+  → server confirms: emits "room:joined"
+
+Client navigates away
+  → emits "leave:poll" with pollId
+  → server: socket.leave(`poll:${pollId}`)
+```
+
+No global broadcasts. All emissions are room-scoped via `io.to('poll:{pollId}').emit(...)`.
+
+#### Events
+
+| Direction | Event | Payload | Trigger |
+|---|---|---|---|
+| Client → Server | `join:poll` | `pollId: string` | User opens poll page |
+| Client → Server | `leave:poll` | `pollId: string` | User navigates away |
+| Server → Client | `room:joined` | `{ pollId, socketId }` | Confirms room join |
+| Server → Client | `poll:response-count` | `{ pollId, totalResponses, timestamp }` | New response submitted |
+| Server → Client | `poll:analytics-update` | `{ pollId, totalResponses, questions[], timestamp }` | New response submitted |
+| Server → Client | `poll:published` | `{ pollId, timestamp }` | Creator publishes results |
+| Server → Client | `poll:expired` | `{ pollId, timestamp }` | Poll expiry detected |
+
+#### Emission Flow (after a response is submitted)
+
+```
+POST /polls/:pollId/respond
+  → ResponseService.submitResponse()
+  → ResponseRepository.create()               ← save to DB
+  → PollRepository.incrementResponseCount()   ← $inc totalResponses atomically
+  → emitResponseCount(pollId, total)          ← immediate, cheap
+  → AnalyticsService.getAnalyticsSnapshot()   ← aggregation pipeline
+  → emitAnalyticsUpdate(pollId, snapshot)     ← full breakdown update
+```
+
+---
+
+### Analytics Pipeline
+
+All analytics are computed inside MongoDB using the aggregation framework. Zero mathematical operations happen in Node.js memory.
+
+#### The Pipeline (`$facet` parallel execution)
+
+```javascript
+[
+  { $match: { pollId: ObjectId(pollId) } },
+  { $facet: {
+    totalCount: [{ $count: "count" }],
+    answerBreakdown: [
+      { $unwind: "$answers" },
+      { $group: { _id: { questionId: "$answers.questionId", optionId: "$answers.optionId" }, count: { $sum: 1 } } }
+    ],
+    dailyTimeline: [
+      { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$submittedAt" } }, count: { $sum: 1 } } },
+      { $sort: { date: 1 } }
+    ],
+    anonymousBreakdown: [
+      { $group: { _id: "$isAnonymous", count: { $sum: 1 } } }
+    ]
+  }}
+]
+```
+
+The only JS-side processing after this: merging question/option text (stored in the poll document) with the ObjectId-keyed counts from the pipeline. This is unavoidable — text lives in the poll document, not in responses — but it's a single `Poll.findById` + an O(n) merge of at most `questions × options` entries.
+
+---
+
+### Security Measures
+
+| Measure | Implementation |
+|---|---|
+| Password hashing | bcryptjs, salt rounds from env (min 10) |
+| JWT secrets | Minimum 32-character requirement enforced by Zod at startup |
+| Token type confusion prevention | `type: "access" \| "refresh"` claim in every token |
+| Token revocation | `jti` blocklist in MongoDB, TTL auto-cleanup |
+| HTTP security headers | `helmet` |
+| Rate limiting | Per-route: login 10/15m, register 5/hr, forgot-password 3/hr |
+| CORS | Locked to `CLIENT_URL` env var — no wildcard |
+| Anti-enumeration | Identical error for wrong email and wrong password |
+| Input validation | Zod schemas on every endpoint |
+| Cookie security | httpOnly, secure (production), sameSite: none, 7d maxAge |
+| Env validation | Zod validates all env vars at startup — process exits on missing vars |
+
+---
+
+### Backend Setup
+
+```bash
+cd server
+cp .env.example .env
+npm install
+npm run dev       # http://localhost:8080
+```
+
+Generate JWT secrets:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+Run twice — one for access secret, one for refresh secret.
+
+---
+
+## Frontend
+
+### Frontend Architecture
+
+The frontend is a single-page application built with React 19 and TypeScript in strict mode. It follows a **feature-layered structure** where concerns are separated by technical role:
+
+```
+URL hit → React Router (lazy-loaded page) → Page component
+              ↓                                    ↓
+         ProtectedRoute                    TanStack Query (server state)
+         PublicOnlyRoute                   Zustand (auth state)
+                                           useSocket (real-time)
+                                           apiClient / plain axios (HTTP)
+```
+
+**State management is split by concern:**
+- **TanStack Query** — all server state (polls, analytics). Handles caching, background refetch, and optimistic invalidation after mutations.
+- **Zustand** — auth state only (user profile + access token). Synchronous, in-memory, never persisted.
+- No prop drilling. No context for data fetching.
+
+---
+
+### Frontend Folder Structure
+
+```
+client/src/
+├── api/
+│   ├── axios.ts           # Axios instance — Bearer injection + silent refresh interceptor
+│   ├── auth.ts            # Typed auth API functions
+│   ├── polls.ts           # Typed poll + analytics API (public/private split)
+│   └── responses.ts       # Response submission
+│
+├── components/
+│   ├── layout/
+│   │   └── AppLayout.tsx  # Authenticated shell — navbar + <Outlet />
+│   └── ui/                # shadcn/ui components (auto-generated, untouched)
+│
+├── hooks/
+│   └── useSocket.ts       # Socket.io room management + strict per-handler cleanup
+│
+├── lib/
+│   ├── utils.ts           # shadcn cn() helper
+│   └── bootstrapAuth.ts   # Silent token restore on page load
+│
+├── pages/
+│   ├── auth/
+│   │   ├── LoginPage.tsx
+│   │   └── RegisterPage.tsx
+│   ├── dashboard/
+│   │   └── DashboardPage.tsx
+│   ├── polls/
+│   │   ├── CreatePollPage.tsx
+│   │   ├── EditPollPage.tsx
+│   │   ├── AnalyticsPage.tsx
+│   │   └── PollResultsPage.tsx
+│   ├── respond/
+│   │   └── RespondPage.tsx
+│   └── NotFoundPage.tsx
+│
+├── router/
+│   └── index.tsx          # createBrowserRouter, ProtectedRoute, PublicOnlyRoute
+│
+├── store/
+│   └── useAuthStore.ts    # Zustand — access token in memory, user profile
+│
+└── types/
+    └── index.ts           # Shared TypeScript interfaces (mirrors backend shapes)
+```
+
+---
+
+### Key Technical Decisions
+
+#### 1. Access token lives in memory — never localStorage
+
+The Zustand store holds the access token in JavaScript memory only. It is never written to `localStorage`, `sessionStorage`, or any browser storage API. On tab close or page refresh, the token is gone.
+
+**The problem this creates:** the user would be logged out on every F5.
+
+**The solution:** `bootstrapAuth` runs before React mounts. It hits `POST /auth/refresh` — the httpOnly cookie is sent automatically by the browser. If valid, the server returns a fresh access token, which populates Zustand. The user never sees a login page.
+
+```ts
+// main.tsx — bootstrap BEFORE render, render AFTER
+bootstrapAuth().finally(() => root.render(<App />));
+```
+
+If the refresh cookie is expired or absent, `bootstrapAuth` fails silently and the user stays unauthenticated — `ProtectedRoute` will redirect them to login when they hit a guarded page.
+
+#### 2. Silent refresh interceptor with queue pattern
+
+The Axios instance has a response interceptor that catches 401s, calls `/auth/refresh`, updates Zustand, and replays the original request — transparently, without the component knowing a refresh happened.
+
+A `failedQueue` prevents the thundering-herd problem: if 5 concurrent requests all 401 at the same moment, only one refresh fires. The other 4 queue behind it and replay once the refresh resolves.
+
+#### 3. Public endpoints bypass the auth interceptor
+
+`GET /polls/:pollId` and `GET /analytics/:pollId/results` are public routes. Using the auth-aware `apiClient` for these creates a risk: if they return an unexpected status, the interceptor fires a refresh attempt, which fires another refresh attempt, creating a rapid loop that freezes the browser.
+
+These endpoints use plain `axios` with `withCredentials: true`. The interceptor is never involved.
+
+```ts
+// src/api/polls.ts
+getById: (pollId) =>
+  axios.get(`${BASE}/polls/${pollId}`, { withCredentials: true })  // plain axios
+  .then(r => r.data),
+
+create: (data) =>
+  apiClient.post('/polls', data)  // apiClient — needs auth
+  .then(r => r.data),
+```
+
+#### 4. useSocket — per-handler cleanup prevents duplicate events
+
+The `useSocket` hook registers event listeners inside `useEffect` and deregisters them on cleanup using the exact same function reference:
+
+```ts
+// Stable wrapper defined inside effect — cleanup always matches
+const handleAnalyticsUpdate = (payload) => { ... };
+socket.on("poll:analytics-update", handleAnalyticsUpdate);
+
+return () => {
+  socket.off("poll:analytics-update", handleAnalyticsUpdate); // same reference
+  socket.emit("leave:poll", pollId);
+};
+```
+
+`socket.off(event)` without a function reference removes ALL listeners for that event — breaking other components. `socket.off(event, handler)` removes only the specific handler registered by this hook instance.
+
+#### 5. navigate() called in useEffect, never during render
+
+Calling `navigate()` directly in a component's render path updates `RouterProvider` state while a different component is rendering — React's "setState during render" violation. This triggers an infinite re-render loop that freezes the browser.
+
+All navigation that depends on fetched data (e.g. redirect to results when `poll.status === "published"`) is wrapped in `useEffect`:
+
+```ts
+useEffect(() => {
+  if (poll?.status === "published") navigate(`/polls/${pollId}/results`, { replace: true });
+}, [poll?.status, pollId, navigate]);
+```
+
+#### 6. All forms use React Hook Form + Zod
+
+Every form in the app (login, register, create poll, edit poll) uses `react-hook-form` with a `zodResolver`. The Zod schemas on the frontend mirror the backend DTOs exactly — same field names, same constraints, same error messages. Validation errors surface inline before any network request is made.
+
+The poll creation form uses nested `useFieldArray` for dynamic questions and options, with `useFormContext` inside child components to read/write form state without prop drilling.
+
+---
+
+### Pages
+
+| Route | Auth | Description |
+|---|---|---|
+| `/auth/login` | Public only | Login form. Redirects to `location.state.from` on success |
+| `/auth/register` | Public only | Register form. Redirects to `location.state.from` on success |
+| `/dashboard` | ✅ Protected | All user polls — status badges, response counts, action buttons |
+| `/polls/create` | ✅ Protected | Poll creation — dynamic questions, options, expiry, settings |
+| `/polls/:id/edit` | ✅ Protected | Edit active poll — pre-filled form |
+| `/polls/:id/analytics` | ✅ Protected | Live analytics — animated counters, charts, socket updates, completion rate, velocity |
+| `/polls/:id/respond` | Public | Poll-taking page — radio options, progress bar, socket expiry/publish handling |
+| `/polls/:id/results` | Public | Published results — option breakdown with progress bars |
+
+---
+
+### Frontend Setup
+
+```bash
+cd client
+cp .env.example .env
+# Set VITE_API_URL=http://localhost:8080
+npm install
+npm run dev       # http://localhost:5173
+```
+
+**`client/.env.example`**
+```env
+# Backend base URL — no trailing slash
+VITE_API_URL=http://localhost:8080
+```
+
+---
+
+## Deployment
+
+| Service | Platform | Notes |
+|---|---|---|
+| Frontend | Vercel | Automatic deploy from `client/` on push to `main` |
+| Backend | DigitalOcean Droplet | nginx reverse proxy + PM2 process manager |
+| Database | MongoDB Atlas | M0 free tier, connection string in `MONGODB_URI` |
+
+**CORS:** Backend `CLIENT_URL` env var is set to the Vercel production URL. Cookie `sameSite: none` is required for cross-domain httpOnly cookies.
+
+---
+
+## Known Limitations
+
+- **DigitalOcean / server cold start:** If the server process restarts, the first request may be slow while PM2 brings it back up.
+- **No email delivery in development:** Forgot-password generates a reset token returned in the API response. In production, an SMTP provider (Resend/SendGrid) is required — configure `SMTP_*` env vars.
+- **Poll editing is restricted:** Only `active` polls can be edited. Editing does not retroactively affect already-submitted responses.
+- **Anonymous duplicate prevention:** Authenticated polls use DB-level unique index for deduplication. Anonymous polls use IP-based rate limiting — not a hard guarantee against re-submission.
