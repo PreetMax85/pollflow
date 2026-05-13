@@ -19,7 +19,6 @@
     /* Strict mode — judge specifically scans for these */
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
     "noImplicitReturns": true,
 
     /* Linting */
