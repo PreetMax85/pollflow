@@ -1,10 +1,12 @@
 # PollFlow
 
-> A production-grade full-stack polling and feedback platform. Create polls, collect anonymous or authenticated responses, view real-time analytics, and publish final results — all through a clean, fast interface backed by a robust REST API.
+A production-grade full-stack polling and feedback platform. Create polls, collect anonymous or authenticated responses, view real-time analytics, and publish final results — all through a clean, fast interface backed by a robust REST API.
 
-**Live Demo:** [pollflow.tech](https://pollflow.tech)
-**API Base URL:** [api.pollflow.tech/api/v1](https://api.pollflow.tech/api/v1)
-**Health Check:** [api.pollflow.tech/health](https://api.pollflow.tech/health)
+**Live Demo:** [pollflow-seven.vercel.app](https://pollflow-seven.vercel.app)
+
+**API Base URL:** [pollflow-backend.up.railway.app/api/v1](https://pollflow-backend.up.railway.app/api/v1)
+
+**Health Check:** [pollflow-backend.up.railway.app/health](https://pollflow-backend.up.railway.app/health)
 
 ---
 
@@ -40,9 +42,11 @@ PollFlow allows users to:
 - **Create polls** with multiple questions, each having multiple single-select options
 - **Configure** each question as mandatory or optional, and set a poll expiry time
 - **Choose response mode** — anonymous (no attribution) or authenticated (respondent identified)
-- **Share a public link** — anyone can respond, or restrict to logged-in users only
-- **View live analytics** — response counts and option breakdowns update in real time via WebSockets as submissions come in
+- **Share a public link or QR code** — anyone can respond, or restrict to logged-in users only
+- **View live analytics** — response counts and option breakdowns update in real time via WebSockets as submissions come in, with animated counters and daily timeline charts
 - **Publish results** — once closed, creators publish final results viewable by anyone on the same link
+- **Export shareable results cards** — generate a branded PNG image of poll results (dark theme, progress bars, winner highlight) for posting on social media
+- **Copy result summaries** — one-click clipboard snapshot with leading option and percentages for each question
 
 ---
 
@@ -61,7 +65,7 @@ PollFlow allows users to:
 | Real-time (server) | Socket.io (poll rooms, typed events) |
 | Auth | JWT dual-token (access 15m / refresh 7d), httpOnly cookie, token blocklist |
 | Validation | Zod (server + client) |
-| Deployment | DigitalOcean Droplet (nginx + PM2) + Vercel |
+| Deployment | Railway (Express) + Vercel (React) |
 
 ---
 
@@ -104,7 +108,7 @@ pollflow/
 │       ├── store/                   # Zustand stores (auth token in memory)
 │       └── types/                   # Shared TypeScript interfaces
 │
-└── server/                          # Express API (deployed to DigitalOcean)
+└── server/                          # Express API (deployed to Railway)
     └── src/
         ├── common/
         │   ├── config/
@@ -458,20 +462,26 @@ client/src/
 │
 ├── components/
 │   ├── layout/
-│   │   └── AppLayout.tsx  # Authenticated shell — navbar + <Outlet />
-│   └── ui/                # shadcn/ui components (auto-generated, untouched)
+│   │   └── AppLayout.tsx      # Authenticated shell — navbar + <Outlet />
+│   ├── ui/                    # shadcn/ui components (auto-generated, untouched)
+│   ├── ResultsCard.tsx        # Off-screen card rendered for html2canvas PNG export
+│   └── QRCodeModal.tsx        # QR code generation dialog for poll sharing
 │
 ├── hooks/
-│   └── useSocket.ts       # Socket.io room management + strict per-handler cleanup
+│   ├── useSocket.ts           # Socket.io room management + strict per-handler cleanup
+│   ├── useCountdown.ts        # Poll expiry countdown with adaptive tick interval
+│   └── useResultsCardExport.ts # html2canvas dynamic import + PNG download trigger
 │
 ├── lib/
-│   ├── utils.ts           # shadcn cn() helper
-│   └── bootstrapAuth.ts   # Silent token restore on page load
+│   ├── utils.ts              # shadcn cn() helper
+│   └── bootstrapAuth.ts      # Silent token restore on page load
 │
 ├── pages/
 │   ├── auth/
 │   │   ├── LoginPage.tsx
-│   │   └── RegisterPage.tsx
+│   │   ├── RegisterPage.tsx
+│   │   ├── ForgotPasswordPage.tsx
+│   │   └── ResetPasswordPage.tsx
 │   ├── dashboard/
 │   │   └── DashboardPage.tsx
 │   ├── polls/
@@ -481,16 +491,17 @@ client/src/
 │   │   └── PollResultsPage.tsx
 │   ├── respond/
 │   │   └── RespondPage.tsx
+│   ├── LandingPage.tsx
 │   └── NotFoundPage.tsx
 │
 ├── router/
-│   └── index.tsx          # createBrowserRouter, ProtectedRoute, PublicOnlyRoute
+│   └── index.tsx              # createBrowserRouter, ProtectedRoute, PublicOnlyRoute
 │
 ├── store/
-│   └── useAuthStore.ts    # Zustand — access token in memory, user profile
+│   └── useAuthStore.ts        # Zustand — access token in memory, user profile
 │
 └── types/
-    └── index.ts           # Shared TypeScript interfaces (mirrors backend shapes)
+    └── index.ts               # Shared TypeScript interfaces (mirrors backend shapes)
 ```
 
 ---
@@ -570,20 +581,48 @@ Every form in the app (login, register, create poll, edit poll) uses `react-hook
 
 The poll creation form uses nested `useFieldArray` for dynamic questions and options, with `useFormContext` inside child components to read/write form state without prop drilling.
 
+#### 7. Shareable results card — html2canvas with off-screen DOM
+
+After a poll is published, a "Share Results" button generates a styled 1200px-wide PNG card. The card contains the poll title, total response count, per-option progress bars with percentages, a winner highlight, and PollFlow branding.
+
+**Architecture:**
+
+```
+Button click → useResultsCardExport.exportCard()
+  → set isExporting = true (disables button, shows spinner)
+  → await import("html2canvas")     ← dynamic import, not in main bundle
+  → await document.fonts.ready      ← ensures Inter font renders
+  → html2canvas(cardRef.current)    ← captures off-screen <ResultsCard />
+  → canvas.toDataURL("image/png")
+  → <a download="...png">.click()   ← triggers browser download
+  → toast.success / toast.error
+```
+
+**Key constraints handled:**
+- **No Lucide icons** — html2canvas can't render SVG components from Lucide reliably. The card uses raw `<svg>` elements.
+- **No Tailwind classes** — html2canvas evaluates CSS from computed styles only. The card uses 100% inline styles (hex/rgba colors, pixel dimensions).
+- **No `oklch()` colors** — Tailwind v4 uses the `oklch()` color function which html2canvas can't parse. An `onclone` callback strips it from the cloned document before rendering.
+- **Font preloading** — `document.fonts.ready` blocks capture until Inter is loaded and rasterized.
+- **Not in main bundle** — html2canvas is 199 KB. It's loaded dynamically only when the user clicks export.
+- **Not visible on page** — the card is rendered inside `position: fixed; top: -9999px; left: -9999px` with `aria-hidden="true"`. It's never painted to the viewport.
+
 ---
 
 ### Pages
 
 | Route | Auth | Description |
-|---|---|---|
+|---|---|---|---|
 | `/auth/login` | Public only | Login form. Redirects to `location.state.from` on success |
 | `/auth/register` | Public only | Register form. Redirects to `location.state.from` on success |
+| `/auth/forgot-password` | Public only | Request password reset — sends reset link |
+| `/reset-password` | Public only | Consume reset token — sets new password |
 | `/dashboard` | ✅ Protected | All user polls — status badges, response counts, action buttons |
 | `/polls/create` | ✅ Protected | Poll creation — dynamic questions, options, expiry, settings |
 | `/polls/:id/edit` | ✅ Protected | Edit active poll — pre-filled form |
-| `/polls/:id/analytics` | ✅ Protected | Live analytics — animated counters, charts, socket updates, completion rate, velocity |
-| `/polls/:id/respond` | Public | Poll-taking page — radio options, progress bar, socket expiry/publish handling |
-| `/polls/:id/results` | Public | Published results — option breakdown with progress bars |
+| `/polls/:id/analytics` | ✅ Protected | Live analytics — animated counters, bar/line charts, socket updates, QR code, export results card |
+| `/polls/:id/respond` | Public | Poll-taking page — radio options, countdown timer, socket expiry/publish handling |
+| `/polls/:id/results` | Public | Published results — option breakdown with progress bars, download results card |
+| `/` | Public | Landing page |
 
 ---
 
@@ -607,19 +646,44 @@ VITE_API_URL=http://localhost:8080
 
 ## Deployment
 
-| Service | Platform | Notes |
-|---|---|---|
-| Frontend | Vercel | Automatic deploy from `client/` on push to `main` |
-| Backend | DigitalOcean Droplet | nginx reverse proxy + PM2 process manager |
-| Database | MongoDB Atlas | M0 free tier, connection string in `MONGODB_URI` |
+| Service | Platform | Root Directory | Build Command | Start Command |
+|---|---|---|---|---|
+| Frontend | [Vercel](https://vercel.com) | `client/` | `npm run build` | — (static) |
+| Backend | [Railway](https://railway.app) | `server/` | `npm run build` | `npm start` |
+| Database | [MongoDB Atlas](https://mongodb.com/atlas) | — | — | — |
 
-**CORS:** Backend `CLIENT_URL` env var is set to the Vercel production URL. Cookie `sameSite: none` is required for cross-domain httpOnly cookies.
+### Environment Variables
+
+**Backend (`server/`) — set these in Railway dashboard:**
+
+```
+NODE_ENV=production
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/pollflow?retryWrites=true&w=majority
+JWT_ACCESS_SECRET=<32+ random hex chars>
+JWT_REFRESH_SECRET=<32+ random hex chars>
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+CLIENT_URL=https://pollflow-seven.vercel.app
+BCRYPT_SALT_ROUNDS=10
+```
+
+**Frontend (`client/`) — set in Vercel dashboard → Environment Variables:**
+
+```
+VITE_API_URL=https://pollflow-backend.up.railway.app
+```
+
+Railway injects `PORT` automatically — do not set it manually. The health endpoint is at `GET /health`.
+
+### CORS
+
+The backend's `CLIENT_URL` env var locks CORS to the Vercel production origin — no wildcard. The refresh token cookie uses `sameSite: none` (required for cross-domain httpOnly cookies) with `secure: true` in production.
 
 ---
 
 ## Known Limitations
 
-- **DigitalOcean / server cold start:** If the server process restarts, the first request may be slow while PM2 brings it back up.
+- **Railway free tier cold start:** The backend may take a few seconds to respond after inactivity (Railway sleeps free-tier services). The first request after a period of no traffic will be slow.
 - **No email delivery in development:** Forgot-password generates a reset token returned in the API response. In production, an SMTP provider (Resend/SendGrid) is required — configure `SMTP_*` env vars.
 - **Poll editing is restricted:** Only `active` polls can be edited. Editing does not retroactively affect already-submitted responses.
 - **Anonymous duplicate prevention:** Authenticated polls use DB-level unique index for deduplication. Anonymous polls use IP-based rate limiting — not a hard guarantee against re-submission.
