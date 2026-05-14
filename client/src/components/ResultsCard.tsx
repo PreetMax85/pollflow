@@ -12,19 +12,18 @@ interface ResultsCardProps {
   data: CardData;
 }
 
-/**
- * Off-screen rendered component — captured by html2canvas.
- * Must use ONLY inline styles. CSS variables and Tailwind
- * utility classes that reference var(--...) won't render correctly
- * in html2canvas because it doesn't evaluate CSS custom properties.
- *
- * Fixed width: 600px — standard OG card width, looks good everywhere.
- */
 export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data }, ref) => {
   const { pollTitle, totalResponses, questions, publishedAt } = data;
 
-  // Only show top 4 questions max — card gets too tall otherwise
   const displayQuestions = questions.slice(0, 4);
+
+  const formattedDate = publishedAt
+    ? new Date(publishedAt).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 
   return (
     <div
@@ -36,8 +35,8 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
         padding: "40px",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         borderRadius: 16,
-        // Needed so html2canvas captures rounded corners correctly
         overflow: "hidden",
+        boxSizing: "border-box",
       }}
     >
       {/* Header */}
@@ -59,9 +58,9 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              flexShrink: 0,
             }}
           >
-            {/* SVG bar chart icon — Lucide won't render in html2canvas */}
             <svg
               width="14"
               height="14"
@@ -77,28 +76,34 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
               <line x1="6" y1="20" x2="6" y2="14" />
             </svg>
           </div>
-          <span style={{ color: "#5EEAD4", fontSize: 13, fontWeight: 600 }}>PollFlow</span>
+          <span style={{ color: "#5EEAD4", fontSize: 13, fontWeight: 600, paddingBottom: "14px" }}>PollFlow</span>
         </div>
+
         <div
           style={{
             background: "rgba(13,148,136,0.15)",
             border: "1px solid rgba(13,148,136,0.3)",
             borderRadius: 20,
-            padding: "4px 12px",
-            fontSize: 11,
-            color: "#0D9488",
-            fontWeight: 600,
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
+            height: 26,
+            padding: "0 12px",
+            paddingBottom: "10px",
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
+            fontSize: 10,
+            color: "#0D9488",
+            fontWeight: 500,
+            letterSpacing: "0.03em",
+            textTransform: "uppercase" as const,
+            lineHeight: 1,
+            whiteSpace: "nowrap" as const,
           }}
         >
           Published Results
         </div>
       </div>
 
-      {/* Poll title */}
+      {/* Title */}
       <h2
         style={{
           color: "#F0FDFA",
@@ -112,25 +117,19 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
         {pollTitle}
       </h2>
 
-      {/* Total responses */}
+      {/* Count */}
       <p style={{ color: "#5EEAD4", fontSize: 13, marginBottom: 28 }}>
         {totalResponses} response{totalResponses !== 1 ? "s" : ""} collected
       </p>
 
       {/* Divider */}
-      <div
-        style={{
-          height: 1,
-          background: "rgba(13,148,136,0.15)",
-          marginBottom: 24,
-        }}
-      />
+      <div style={{ height: 1, background: "rgba(13,148,136,0.15)", marginBottom: 24 }} />
 
       {/* Questions */}
       {displayQuestions.map((question, qIndex) => {
-        const topOption = question.options.reduce(
-          (top, opt) => (opt.count > (top?.count ?? -1) ? opt : top),
-          question.options[0],
+        const topOption = question.options.reduce<QuestionAnalytics["options"][number] | null>(
+          (top, opt) => (top === null || opt.count > top.count ? opt : top),
+          null,
         );
 
         return (
@@ -144,7 +143,7 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
                 fontSize: 11,
                 fontWeight: 500,
                 letterSpacing: "0.05em",
-                textTransform: "uppercase",
+                textTransform: "uppercase" as const,
                 marginBottom: 6,
               }}
             >
@@ -162,36 +161,34 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
               {question.questionText}
             </p>
 
-            {/* Options */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[...question.options]
                 .sort((a, b) => b.count - a.count)
-                .slice(0, 4) // max 4 options per question on the card
+                .slice(0, 4)
                 .map((option) => {
                   const isWinner =
-                    option.optionId === topOption?.optionId && question.totalAnswers > 0;
+                    topOption !== null &&
+                    option.optionId === topOption.optionId &&
+                    question.totalAnswers > 0;
+
+                  const barWidth = Math.max(option.percentage, 1.5);
 
                   return (
                     <div key={option.optionId}>
                       <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          marginBottom: 6,
-                        }}
+                        style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 5 }}
                       >
                         <span
                           style={{
                             fontSize: 12,
                             color: isWinner ? "#0D9488" : "#94A3B8",
                             fontWeight: isWinner ? 600 : 400,
-                            maxWidth: 400,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            flexGrow: 1,
+                            lineHeight: 1.4,
+                            wordBreak: "break-word" as const,
                           }}
                         >
-                          {isWinner ? "↑ " : ""}
+                          {isWinner ? "★ " : ""}
                           {option.optionText}
                         </span>
                         <span
@@ -200,7 +197,8 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
                             color: isWinner ? "#0D9488" : "#5EEAD4",
                             fontWeight: isWinner ? 700 : 400,
                             flexShrink: 0,
-                            marginLeft: 8,
+                            minWidth: 44,
+                            textAlign: "right" as const,
                           }}
                         >
                           {option.percentage}%
@@ -219,10 +217,8 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
                         <div
                           style={{
                             height: "100%",
-                            width: `${option.percentage}%`,
-                            background: isWinner
-                              ? "linear-gradient(90deg, #0D9488, #14B8A6)"
-                              : "rgba(94,234,212,0.3)",
+                            width: `${barWidth}%`,
+                            background: isWinner ? "#0D9488" : "rgba(94,234,212,0.3)",
                             borderRadius: 3,
                           }}
                         />
@@ -235,17 +231,10 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
         );
       })}
 
-      {/* If more than 4 questions, note it */}
+      {/* Overflow note */}
       {questions.length > 4 && (
-        <p
-          style={{
-            color: "#475569",
-            fontSize: 11,
-            marginTop: 16,
-            textAlign: "center",
-          }}
-        >
-          + {questions.length - 4} more question{questions.length - 4 !== 1 ? "s" : ""} — view full
+        <p style={{ color: "#475569", fontSize: 11, marginTop: 16, textAlign: "center" as const }}>
+          +{questions.length - 4} more question{questions.length - 4 !== 1 ? "s" : ""} — view full
           results at pollflow.jdevs.codes
         </p>
       )}
@@ -262,20 +251,7 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
         }}
       >
         <span style={{ color: "#334155", fontSize: 11 }}>pollflow.jdevs.codes</span>
-        <span style={{ color: "#334155", fontSize: 11 }}>
-          Results published ·{" "}
-          {publishedAt
-            ? new Date(publishedAt).toLocaleDateString(undefined, {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })
-            : new Date().toLocaleDateString(undefined, {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-        </span>
+        <span style={{ color: "#334155", fontSize: 11 }}>Results published · {formattedDate}</span>
       </div>
     </div>
   );
