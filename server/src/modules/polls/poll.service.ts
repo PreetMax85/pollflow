@@ -3,6 +3,7 @@ import { PollRepository } from "./poll.repository.js";
 import { ResponseRepository } from "../responses/response.repository.js";
 import { ApiError } from "../../common/utils/ApiError.js";
 import { emitPollPublished, emitPollExpired } from "../../socket/socket.js";
+import { env } from "../../common/config/env.js";
 import { CreatePollInput, UpdatePollInput, PollListQuery } from "./dtos/poll.dto.js";
 
 /**
@@ -237,7 +238,7 @@ export class PollService {
    */
   static async expireOverduePolls(): Promise<number> {
     const count = await PollRepository.expireOverduePolls();
-    if (count > 0) {
+    if (count > 0 && env.NODE_ENV === "development") {
       console.log(`[PollService] Expired ${count} overdue poll(s)`);
     }
     return count;

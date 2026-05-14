@@ -111,7 +111,7 @@ export class AuthService {
         subject: "Reset your PollFlow password",
         html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 15 minutes.</p>`,
       });
-    } else {
+    } else if (env.NODE_ENV === "development") {
       console.log(`[PasswordReset] Mock email to ${data.email}: ${resetUrl}`);
     }
 

@@ -2,11 +2,11 @@
 
 A production-grade full-stack polling and feedback platform. Create polls, collect anonymous or authenticated responses, view real-time analytics, and publish final results — all through a clean, fast interface backed by a robust REST API.
 
-**Live Demo:** [pollflow-seven.vercel.app](https://pollflow-seven.vercel.app)
+**Live Demo:** [pollflow.jdevs.codes](https://pollflow.jdevs.codes)
 
-**API Base URL:** [pollflow-backend.up.railway.app/api/v1](https://pollflow-backend.up.railway.app/api/v1)
+**API Base URL:** [api.pollflow.jdevs.codes/api/v1](https://api.pollflow.jdevs.codes/api/v1)
 
-**Health Check:** [pollflow-backend.up.railway.app/health](https://pollflow-backend.up.railway.app/health)
+**Health Check:** [api.pollflow.jdevs.codes/health](https://api.pollflow.jdevs.codes/health)
 
 ---
 
@@ -681,7 +681,7 @@ JWT_ACCESS_SECRET=<32+ random hex chars>
 JWT_REFRESH_SECRET=<32+ random hex chars>
 JWT_ACCESS_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
-CLIENT_URL=https://pollflow-seven.vercel.app
+CLIENT_URL=https://pollflow.jdevs.codes
 BCRYPT_SALT_ROUNDS=10
 RESEND_API_KEY=re_xxxxxxxxxxxx
 ```
@@ -689,7 +689,7 @@ RESEND_API_KEY=re_xxxxxxxxxxxx
 **Frontend (`client/`) — set in Vercel dashboard → Environment Variables:**
 
 ```
-VITE_API_URL=https://pollflow-backend.up.railway.app
+VITE_API_URL=https://api.pollflow.jdevs.codes
 ```
 
 Railway injects `PORT` automatically — do not set it manually. The health endpoint is at `GET /health`.

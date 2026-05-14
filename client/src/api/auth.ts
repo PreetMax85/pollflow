@@ -1,7 +1,7 @@
 import { apiClient } from "@/api/axios";
 import type { ApiResponse, AuthResponseData } from "@/types";
 
-// ─── Request Shapes ───────────────────────────────────────────────────────────
+// Request Shapes
 
 export interface LoginInput {
   email: string;
@@ -14,7 +14,7 @@ export interface RegisterInput {
   password: string;
 }
 
-// ─── API Calls ────────────────────────────────────────────────────────────────
+// API Calls
 
 export const authApi = {
   login: (data: LoginInput) =>

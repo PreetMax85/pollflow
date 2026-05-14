@@ -1,43 +1,21 @@
-/**
- *
- * Configured Axios instance for all API communication.
- *
- * ┌─────────────────────────────────────────────────────────────────────────┐
- * │  INTERCEPTOR FLOW                                                        │
- * │                                                                          │
- * │  REQUEST  → attach Bearer token from Zustand store                       │
- * │  RESPONSE → on 401: silently call /auth/refresh (cookie-based)          │
- * │              → store new access token in Zustand                         │
- * │              → replay the original failed request                        │
- * │              → if refresh itself fails → clearAuth() → reject            │
- * │                                                                          │
- * │  Queue pattern prevents a thundering-herd of parallel refresh calls      │
- * │  when multiple requests 401 simultaneously.                              │
- * └─────────────────────────────────────────────────────────────────────────┘
- */
-
 import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/useAuthStore";
 
-// ─── Base Configuration ───────────────────────────────────────────────────────
+// Base Config
 
 const BASE_URL = `${import.meta.env.VITE_API_URL ?? "http://localhost:8000"}/api/v1`;
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
-  /**
-   * CRITICAL: withCredentials must be true so the browser sends the
-   * httpOnly refresh-token cookie on every request (including /refresh).
-   */
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types
 
-/**
+/*
  * Shape the backend returns from POST /api/v1/auth/refresh.
  * ApiResponse.ok wraps the payload: { success, message, data: { accessToken } }
  */
@@ -47,7 +25,7 @@ interface RefreshTokenResponse {
   data: { accessToken: string };
 }
 
-/**
+/*
  * Extended config that carries a retry flag so we never refresh-loop
  * (i.e. if the /refresh call itself 401s, we don't try to refresh again).
  */
@@ -55,21 +33,21 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
-/** A pending promise resolver/rejector waiting on an in-flight refresh. */
+/* A pending promise resolver/rejector waiting on an in-flight refresh. */
 interface FailedQueueEntry {
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
 }
 
-// ─── Refresh Queue State ──────────────────────────────────────────────────────
+// Refresh Queue State
 
-/**
+/*
  * Lock flag: true while a /refresh call is in-flight.
  * Subsequent 401s enqueue themselves instead of firing parallel refreshes.
  */
 let isRefreshing = false;
 
-/**
+/*
  * Queue of requests that 401'd while a refresh was already in progress.
  * Once the refresh resolves they are replayed; on failure they are rejected.
  */
@@ -85,14 +63,13 @@ const processQueue = (error: unknown, token: string | null): void => {
     if (error !== null) {
       entry.reject(error);
     } else {
-      // token is guaranteed non-null when error is null
       entry.resolve(token as string);
     }
   });
   failedQueue = [];
 };
 
-// ─── Request Interceptor ──────────────────────────────────────────────────────
+// Request Interceptor
 
 /**
  * Attach the in-memory access token to every outgoing request.
@@ -109,10 +86,9 @@ apiClient.interceptors.request.use(
   (error: unknown) => Promise.reject(error),
 );
 
-// ─── Response Interceptor ─────────────────────────────────────────────────────
+// Response Interceptor
 
 apiClient.interceptors.response.use(
-  // 2xx — pass through unchanged
   (response: AxiosResponse) => response,
 
   // Non-2xx — handle 401 with silent refresh, propagate everything else
@@ -125,7 +101,6 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // ── A refresh is already in flight ─────────────────────────────────────
     if (isRefreshing) {
       // Enqueue this request; it will be replayed once the refresh settles.
       return new Promise<string>((resolve, reject) => {
@@ -136,16 +111,11 @@ apiClient.interceptors.response.use(
       });
     }
 
-    // ── First 401 — kick off the refresh ───────────────────────────────────
+    // First 401 — kick off the refresh
     originalRequest._retry = true;
     isRefreshing = true;
 
     try {
-      /**
-       * Use a plain axios instance (NOT apiClient) to avoid triggering
-       * this same interceptor recursively. withCredentials sends the
-       * httpOnly refresh cookie automatically.
-       */
       const { data } = await axios.post<RefreshTokenResponse>(
         `${BASE_URL}/auth/refresh`,
         {},
