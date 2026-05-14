@@ -62,12 +62,11 @@ export default function AppLayout() {
   const handleLogout = async () => {
     try {
       await apiClient.post("/auth/logout");
-    } catch {
-      // Even if the server call fails, clear local state so the user
-      // isn't stuck in a broken authenticated-but-revoked limbo.
-    } finally {
       clearAuth();
       toast.success("Logged out successfully");
+      navigate("/auth/login", { replace: true });
+    } catch {
+      clearAuth();
       navigate("/auth/login", { replace: true });
     }
   };

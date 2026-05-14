@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { toast } from "sonner";
 
 interface QRCodeModalProps {
   url: string;
@@ -28,7 +29,10 @@ export function QRCodeModal({ url, open, onClose, pollTitle }: QRCodeModalProps)
       },
     })
       .then(setQrDataUrl)
-      .catch(() => setQrDataUrl(null));
+      .catch(() => {
+        setQrDataUrl(null);
+        toast.error("Failed to generate QR code");
+      });
   }, [open, url]);
 
   const handleDownload = () => {
