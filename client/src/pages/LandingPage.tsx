@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import QRCode from "qrcode";
 import {
   BarChart3,
   ArrowRight,
@@ -179,7 +180,7 @@ function DashboardMock() {
           className="mx-3 flex-1 rounded px-2 py-0.5 text-xs text-gray-400"
           style={{ background: "#e5e7eb" }}
         >
-          pollflow.tech/dashboard
+          pollflow.jdevs.codes/dashboard
         </div>
       </div>
       <div className="p-4">
@@ -253,7 +254,7 @@ function AnalyticsMock() {
           className="mx-3 flex-1 rounded px-2 py-0.5 text-xs text-gray-400"
           style={{ background: "#e5e7eb" }}
         >
-          pollflow.tech/polls/abc123/analytics
+          pollflow.jdevs.codes/polls/abc123/analytics
         </div>
       </div>
       <div className="p-4">
@@ -313,23 +314,18 @@ function AnalyticsMock() {
 }
 
 function QRMock() {
-  const cells: boolean[] = [];
-  const seed = 42;
-  for (let i = 0; i < 121; i++) {
-    const x = i % 11,
-      y = Math.floor(i / 11);
-    const isCorner =
-      (x < 3 && y < 3) ||
-      (x > 7 && y < 3) ||
-      (x < 3 && y > 7) ||
-      (x === 3 && y < 3) ||
-      (x < 3 && y === 3) ||
-      (x === 8 && y < 3) ||
-      (x > 7 && y === 3) ||
-      (x === 3 && y > 7) ||
-      (x < 3 && y === 8);
-    cells.push(isCorner || (seed * (i + 7) * 13) % 3 === 0);
-  }
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      QRCode.toCanvas(canvasRef.current, "https://pollflow.jdevs.codes", {
+        width: 130,
+        margin: 1,
+        color: { dark: "#0A0F0F", light: "#ffffff" },
+      });
+    }
+  }, []);
+
   return (
     <div
       className="flex flex-col items-center gap-4 rounded-xl p-6"
@@ -339,26 +335,14 @@ function QRMock() {
         Scan to respond · no app needed
       </p>
       <div className="rounded-lg p-3" style={{ background: "#fff" }}>
-        <div className="grid" style={{ gridTemplateColumns: "repeat(11, 10px)", gap: 1.5 }}>
-          {cells.map((filled, i) => (
-            <div
-              key={i}
-              style={{
-                width: 10,
-                height: 10,
-                background: filled ? "#0A0F0F" : "transparent",
-                borderRadius: 1,
-              }}
-            />
-          ))}
-        </div>
+        <canvas ref={canvasRef} width={130} height={130} />
       </div>
       <div
         className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
         style={{ background: "rgba(13,148,136,0.1)", color: "#0D9488" }}
       >
         <QrCode className="h-3.5 w-3.5" />
-        pollflow.tech/polls/abc123/respond
+        pollflow.jdevs.codes
       </div>
     </div>
   );
@@ -435,7 +419,7 @@ function ResultsCardMock() {
       </div>
       <div className="mt-4 flex items-center justify-between">
         <span className="text-xs" style={{ color: "#334155" }}>
-          pollflow.tech
+          pollflow.jdevs.codes
         </span>
         <div
           className="flex cursor-pointer items-center gap-1.5 rounded px-2 py-1 text-xs font-medium"
@@ -1098,7 +1082,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <DashboardMock />
-              <p className="mt-3 text-sm" style={{ color: "rgba(94,234,212,0.5)" }}>
+              <p className="mt-3 text-sm" style={{ color: "rgba(94,234,212,0.7)" }}>
                 All your polls at a glance — status, response count, share links, completion rate.
               </p>
             </div>
@@ -1115,7 +1099,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <AnalyticsMock />
-              <p className="mt-3 text-sm" style={{ color: "rgba(94,234,212,0.5)" }}>
+              <p className="mt-3 text-sm" style={{ color: "rgba(94,234,212,0.7)" }}>
                 Option breakdowns, daily timelines, anonymous vs identified — all live via
                 WebSocket.
               </p>
@@ -1141,7 +1125,7 @@ export default function LandingPage() {
             >
               Before PollFlow.
             </h2>
-            <p className="mt-2 text-sm" style={{ color: "rgba(94,234,212,0.5)" }}>
+            <p className="mt-2 text-sm" style={{ color: "rgba(94,234,212,0.7)" }}>
               If any of these sound familiar, keep reading.
             </p>
           </div>
@@ -1440,7 +1424,7 @@ export default function LandingPage() {
             </div>
             <div
               className="flex items-center gap-6 text-xs"
-              style={{ color: "rgba(94,234,212,0.5)" }}
+              style={{ color: "rgba(94,234,212,0.7)" }}
             >
               {/* FIXED: now correctly scrolls to #features */}
               <button onClick={scrollToFeatures} className="transition-colors hover:text-teal-300">
@@ -1453,7 +1437,7 @@ export default function LandingPage() {
                 Sign in
               </Link>
               <a
-                href="https://github.com/your-username/pollflow"
+                href="https://github.com/PreetMax85/pollflow"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 transition-colors hover:text-teal-300"

@@ -90,6 +90,8 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
             fontWeight: 600,
             letterSpacing: "0.05em",
             textTransform: "uppercase",
+            display: "flex",
+            alignItems: "center",
           }}
         >
           Published Results
@@ -175,7 +177,7 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
                         style={{
                           display: "flex",
                           justifyContent: "space-between",
-                          marginBottom: 4,
+                          marginBottom: 6,
                         }}
                       >
                         <span
@@ -244,7 +246,7 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
           }}
         >
           + {questions.length - 4} more question{questions.length - 4 !== 1 ? "s" : ""} — view full
-          results at pollflow.tech
+          results at pollflow.jdevs.codes
         </p>
       )}
 
@@ -259,7 +261,7 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
           alignItems: "center",
         }}
       >
-        <span style={{ color: "#334155", fontSize: 11 }}>pollflow.tech</span>
+        <span style={{ color: "#334155", fontSize: 11 }}>pollflow.jdevs.codes</span>
         <span style={{ color: "#334155", fontSize: 11 }}>
           Results published ·{" "}
           {publishedAt
