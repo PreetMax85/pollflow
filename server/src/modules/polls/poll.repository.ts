@@ -78,7 +78,7 @@ export class PollRepository {
    */
   static async update(pollId: string, data: UpdatePollInput): Promise<IPoll | null> {
     if (!Types.ObjectId.isValid(pollId)) return null;
-    return Poll.findByIdAndUpdate(pollId, { $set: data }, { new: true, runValidators: true }).lean({
+    return Poll.findByIdAndUpdate(pollId, { $set: data }, { returnDocument: "after", runValidators: true }).lean({
       virtuals: true,
     });
   }
@@ -103,7 +103,7 @@ export class PollRepository {
     return Poll.findByIdAndUpdate(
       pollId,
       { $set: { status: "expired" } },
-      { new: true },
+      { returnDocument: "after" },
     ).lean({ virtuals: true });
   }
 
@@ -121,7 +121,7 @@ export class PollRepository {
           publishedAt: new Date(),
         },
       },
-      { new: true },
+      { returnDocument: "after" },
     ).lean({ virtuals: true });
   }
 
@@ -134,7 +134,7 @@ export class PollRepository {
     const updated = await Poll.findByIdAndUpdate(
       pollId,
       { $inc: { totalResponses: 1 } },
-      { new: true, select: "totalResponses" },
+      { returnDocument: "after", select: "totalResponses" },
     ).lean();
     return (updated as { totalResponses: number } | null)?.totalResponses ?? 0;
   }

@@ -296,6 +296,19 @@ export default function RespondPage() {
         description="Please wait."
       />
     );
+  const isExpiredError =
+    (error as { response?: { status?: number } } | null)?.response?.status === 403;
+
+  if (isExpiredError)
+    return (
+      <StatusScreen
+        icon={<Clock className="h-7 w-7 text-muted-foreground" />}
+        title="Poll has expired"
+        description="This poll has expired and is no longer accepting responses."
+        action={<Button asChild variant="outline"><Link to="/">Go home</Link></Button>}
+      />
+    );
+
   if (error || !poll)
     return (
       <StatusScreen

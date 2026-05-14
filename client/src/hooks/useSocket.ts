@@ -65,6 +65,8 @@ const getSocket = (): PollSocket => {
     socketSingleton = io(SOCKET_URL, {
       withCredentials: true,
       autoConnect: false,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
       timeout: 20000,
     });
   }
