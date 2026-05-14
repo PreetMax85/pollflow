@@ -141,6 +141,12 @@ const startServer = async (): Promise<void> => {
 
 startServer();
 
+// ─── Unhandled Rejection Handler ───────────────────────────────────────────────
+// Node 15+ crashes on unhandled promise rejections without this handler.
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[Server] Unhandled Rejection at:", promise, "reason:", reason);
+});
+
 // ─── Graceful Shutdown ─────────────────────────────────────────────────────────
 // Close HTTP server, Socket.io, and MongoDB in order on SIGTERM/SIGINT.
 // Ensures clean shutdown — HTTP server, Socket.io, and MongoDB close in order.

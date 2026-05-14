@@ -313,7 +313,19 @@ export default function RespondPage() {
         }
       />
     );
-  if (poll?.status === "published") return null;
+  if (poll?.status === "published")
+    return (
+      <StatusScreen
+        icon={<BarChart3 className="h-7 w-7 text-muted-foreground" />}
+        title="Poll results are public"
+        description="This poll has been published."
+        action={
+          <Button asChild variant="outline">
+            <Link to={`/polls/${pollId}/results`}>View results</Link>
+          </Button>
+        }
+      />
+    );
   if (isPollExpired(poll) || isExpiredBySocket)
     return (
       <StatusScreen

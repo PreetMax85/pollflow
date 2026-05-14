@@ -57,7 +57,7 @@ const closePoll = (pollId: string) =>
 
 function useAnimatedCounter(target: number, duration = 700): number {
   const [display, setDisplay] = useState(target);
-  const prev = useRef(target);
+  const prev = useRef(0);
 
   useEffect(() => {
     const start = prev.current;
@@ -245,7 +245,7 @@ export default function AnalyticsPage() {
 
   const [liveData, setLiveData] = useState<FullAnalytics | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
-  const localPublishRef = useRef(false);
+  const localPublishRef = useRef(0);
 
   const analytics = liveData ?? initial ?? null;
 
@@ -322,7 +322,7 @@ export default function AnalyticsPage() {
       if (pollId) queryClient.setQueryData(["analytics", pollId], updated);
       return updated;
     });
-    if (!localPublishRef.current) {
+    if (Date.now() - localPublishRef.current > 5000) {
       toast.success("Poll results are now public!");
     }
     void queryClient.invalidateQueries({ queryKey: ["polls"] });
@@ -335,7 +335,7 @@ export default function AnalyticsPage() {
       if (pollId) queryClient.setQueryData(["analytics", pollId], updated);
       return updated;
     });
-    if (!localPublishRef.current) {
+    if (Date.now() - localPublishRef.current > 5000) {
       toast.info("This poll has expired.");
     }
   }, [pollId, queryClient]);
@@ -351,20 +351,20 @@ export default function AnalyticsPage() {
 
   const closeAndPublishMutation = useMutation({
     mutationFn: async () => {
-      localPublishRef.current = true;
+      localPublishRef.current = Date.now();
       if (analytics?.status === "active") {
         await closePoll(pollId!);
       }
       return publishPoll(pollId!);
     },
     onSuccess: () => {
-      localPublishRef.current = false;
+      localPublishRef.current = 0;
       setLiveData((prev): FullAnalytics | null => (prev ? { ...prev, status: "published" } : prev));
       toast.success("Results published!");
       void queryClient.invalidateQueries({ queryKey: ["polls"] });
     },
     onError: (err: { response?: { data?: { error?: string } } }) => {
-      localPublishRef.current = false;
+      localPublishRef.current = 0;
       toast.error(getApiErrorMessage(err, "Failed to publish."));
     },
   });

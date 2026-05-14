@@ -32,13 +32,26 @@ function LivePollMock() {
   const [total, setTotal] = useState(0);
   const [flash, setFlash] = useState<number | null>(null);
   const [restarting, setRestarting] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const isMounted = useRef(true);
+
+  const clearAllTimeouts = () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+  };
 
   const runCycle = () => {
     let t = 0;
     const c = [0, 0, 0, 0];
+    const sched = (fn: () => void, delay: number) => {
+      const id = setTimeout(() => {
+        if (!isMounted.current) return;
+        fn();
+      }, delay);
+      timeoutsRef.current.push(id);
+    };
     const tick = (delay: number) => {
-      timeoutRef.current = setTimeout(() => {
+      sched(() => {
         const r = Math.random();
         let cum = 0,
           chosen = 0;
@@ -54,12 +67,12 @@ function LivePollMock() {
         setCounts([...c]);
         setTotal(t);
         setFlash(chosen);
-        setTimeout(() => setFlash(null), 380);
+        sched(() => setFlash(null), 380);
         if (t < RESTART_AT) {
           tick(600);
         } else {
           setRestarting(true);
-          timeoutRef.current = setTimeout(() => {
+          sched(() => {
             setCounts([0, 0, 0, 0]);
             setTotal(0);
             setRestarting(false);
@@ -72,9 +85,11 @@ function LivePollMock() {
   };
 
   useEffect(() => {
+    isMounted.current = true;
     runCycle();
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      isMounted.current = false;
+      clearAllTimeouts();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

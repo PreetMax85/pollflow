@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, Model } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 /**
  * IUser — the TypeScript interface for a User document.
@@ -23,19 +23,7 @@ export interface IUser extends Document {
   updatedAt: Date;
 }
 
-/**
- * IUserMethods — instance methods on the User document.
- * We keep business logic out of the schema, but utility methods that are
- * tightly coupled to the document structure (like field presence checks)
- * can live here.
- */
-interface IUserMethods {
-  toSafeObject(): { id: string; name: string; email: string };
-}
-
-type UserModel = Model<IUser, Record<string, never>, IUserMethods>;
-
-const userSchema = new Schema<IUser, UserModel, IUserMethods>(
+const userSchema = new Schema<IUser>(
   {
     name: {
       type: String,
@@ -98,30 +86,10 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
 );
 
 /**
- * Instance method — returns a plain object with only safe, public fields.
- * Use this instead of spreading the full document into API responses.
- *
- * Usage in service:
- *   const user = await User.findById(id);
- *   return user.toSafeObject();
- */
-userSchema.methods.toSafeObject = function (this: IUser): {
-  id: string;
-  name: string;
-  email: string;
-} {
-  return {
-    id: this._id.toString(),
-    name: this.name,
-    email: this.email,
-  };
-};
-
-/**
  * Index strategy:
  * - email: unique index (declared via unique: true above) — O(1) login lookups
  * - resetToken: sparse index (declared above) — O(1) reset token lookups
  * - No compound indexes needed for auth — queries are always by single field
  */
 
-export const User = mongoose.model<IUser, UserModel>("User", userSchema);
+export const User = mongoose.model<IUser>("User", userSchema);

@@ -35,7 +35,7 @@ import { authApi } from "@/api/auth";
 // ─── Validation Schema ────────────────────────────────────────────────────────
 // Mirrors the backend registerSchema exactly — same regex, same messages.
 
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
 
 const passwordMessage =
   "Password must contain uppercase, lowercase, number, and special character (@$!%*?&)";
