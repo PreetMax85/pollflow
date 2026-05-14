@@ -34,6 +34,7 @@ import { submitResponse } from "@/api/responses";
 import { useAuthStore, selectIsAuthenticated, selectUser } from "@/store/useAuthStore";
 import { useSocket, type PollStatusPayload } from "@/hooks/useSocket";
 import { useCountdown } from "@/hooks/useCountdown";
+import { getApiErrorMessage } from "@/lib/utils";
 
 type FormValues = Record<string, string>;
 
@@ -283,7 +284,7 @@ export default function RespondPage() {
       const status = err.response?.status;
       if (status === 409) toast.error("You have already responded to this poll.");
       else if (status === 401) toast.error("You need to be logged in to respond.");
-      else toast.error(err.response?.data?.error ?? "Failed to submit response.");
+      else toast.error(getApiErrorMessage(err, "Failed to submit response."));
     },
   });
 

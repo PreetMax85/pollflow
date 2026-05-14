@@ -31,6 +31,7 @@ import {
 
 import { useAuthStore } from "@/store/useAuthStore";
 import { authApi } from "@/api/auth";
+import { getApiErrorMessage } from "@/lib/utils";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 // Mirrors the backend registerSchema exactly — same regex, same messages.
@@ -84,7 +85,7 @@ export default function RegisterPage() {
       let message: string;
       if (status === 409) message = "An account with this email already exists. Try logging in instead.";
       else if (status === 429) message = "Too many attempts. Please wait a few minutes and try again.";
-      else message = error.response?.data?.error ?? "Registration failed. Please try again.";
+      else message = getApiErrorMessage(err, "Registration failed. Please try again.");
       toast.error(message);
     }
   };

@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { PlusCircle, Trash2, GripVertical, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 
+import { getApiErrorMessage } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,6 +52,8 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
+const MAX_OPTIONS = 6;
+
 const optionSchema = z.object({
   text: z.string().min(1, "Option cannot be empty").max(300),
 });
@@ -58,7 +61,7 @@ const optionSchema = z.object({
 const questionSchema = z.object({
   text: z.string().min(3, "Question must be at least 3 characters").max(500),
   isRequired: z.boolean(),
-  options: z.array(optionSchema).min(2, "At least 2 options required"),
+  options: z.array(optionSchema).min(2, "At least 2 options required").max(MAX_OPTIONS),
 });
 
 const editPollSchema = z.object({
@@ -145,7 +148,7 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs">Options <span className="text-muted-foreground">(min. 2)</span></Label>
+            <Label className="text-xs">Options <span className="text-muted-foreground">(min. 2, max. {MAX_OPTIONS})</span></Label>
             {optionFields.map((optionField, optionIndex) => (
               <FormField key={optionField.id} control={control}
                 name={`questions.${questionIndex}.options.${optionIndex}.text`}
@@ -169,8 +172,9 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
               />
             ))}
             <Button type="button" size="sm" variant="outline" className="w-full border-dashed"
-              onClick={() => appendOption({ text: "" })}>
-              <PlusCircle className="h-3.5 w-3.5 mr-1.5" /> Add option
+              onClick={() => appendOption({ text: "" })}
+              disabled={optionFields.length >= MAX_OPTIONS}>
+              {optionFields.length >= MAX_OPTIONS ? `Max ${MAX_OPTIONS} options` : "Add option"}
             </Button>
           </div>
         </CardContent>
@@ -248,7 +252,7 @@ export default function EditPollPage() {
       const status = error.response?.status;
       let message: string;
       if (status === 403) message = "You don't have permission to edit this poll.";
-      else message = error.response?.data?.error ?? "Failed to update poll. Please try again.";
+      else message = getApiErrorMessage(err, "Failed to update poll. Please try again.");
       toast.error(message);
     }
   };

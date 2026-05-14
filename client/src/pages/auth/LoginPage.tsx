@@ -27,6 +27,7 @@ import {
 
 import { useAuthStore } from "@/store/useAuthStore";
 import { authApi } from "@/api/auth";
+import { getApiErrorMessage } from "@/lib/utils";
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 // Mirrors the backend loginSchema exactly.
@@ -68,7 +69,7 @@ export default function LoginPage() {
       let message: string;
       if (status === 401) message = "Invalid email or password.";
       else if (status === 429) message = "Too many attempts. Please wait a few minutes and try again.";
-      else message = error.response?.data?.error ?? "Login failed. Please try again.";
+      else message = getApiErrorMessage(err, "Login failed. Please try again.");
       toast.error(message);
     }
   };

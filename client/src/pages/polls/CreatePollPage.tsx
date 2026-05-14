@@ -22,7 +22,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import type { ControllerRenderProps } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 
-import { cn } from "@/lib/utils";
+import { cn, getApiErrorMessage } from "@/lib/utils";
 import { pollsApi } from "@/api/polls";
 
 
@@ -274,7 +274,7 @@ export default function CreatePollPage() {
       const error = err as { response?: { status?: number; data?: { error?: string } } };
       const status = error.response?.status;
       if (status === 401) { navigate("/auth/login", { replace: true }); return; }
-      const message = error.response?.data?.error ?? "Failed to create poll. Please try again.";
+      const message = getApiErrorMessage(err, "Failed to create poll. Please try again.");
       toast.error(message);
     }
   };

@@ -22,6 +22,7 @@ import { useResultsCardExport } from "@/hooks/useResultsCardExport";
 import { apiClient } from "@/api/axios";
 import type { ApiResponse, FullAnalytics, QuestionAnalytics, PollStatus } from "@/types";
 import { useSocket, type AnalyticsUpdatePayload } from "@/hooks/useSocket";
+import { getApiErrorMessage } from "@/lib/utils";
 
 const getAnalytics = (pollId: string): Promise<FullAnalytics> =>
   apiClient
@@ -150,10 +151,10 @@ const QuestionCard = ({ question, index, totalResponses }: { question: QuestionA
                   contentStyle={{
                     fontSize: 12,
                     borderRadius: 6,
-                    border: "1px solid hsl(var(--border))",
+                    border: "1px solid var(--border)",
                   }}
                 />
-                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="count" fill="var(--primary)" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -314,7 +315,7 @@ export default function AnalyticsPage() {
     },
     onError: (err: { response?: { data?: { error?: string } } }) => {
       localPublishRef.current = false;
-      toast.error(err.response?.data?.error ?? "Failed to publish.");
+      toast.error(getApiErrorMessage(err, "Failed to publish."));
     },
   });
 
@@ -528,9 +529,9 @@ export default function AnalyticsPage() {
                       })
                     }
                     formatter={(value: unknown) => [Number(value), "Responses"] as [number, string]}
-                    contentStyle={{ fontSize: 12, borderRadius: 6, border: "1px solid hsl(var(--border))" }}
+                    contentStyle={{ fontSize: 12, borderRadius: 6, border: "1px solid var(--border)" }}
                   />
-                  <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))"
+                  <Line type="monotone" dataKey="count" stroke="var(--primary)"
                     strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>

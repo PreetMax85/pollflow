@@ -83,7 +83,7 @@
 }
 
 .landing-heading {
-  font-family: 'Instrument Serif', serif;
+  font-family: 'Instrument Serif', 'Instrument Serif Variable', serif;
 }
 
 @layer base {

@@ -49,6 +49,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { pollsApi } from "@/api/polls";
 import { selectUser, useAuthStore } from "@/store/useAuthStore";
 import type { Poll, PollStatus } from "@/types";
+import { getApiErrorMessage } from "@/lib/utils";
 
 /** Safely extract poll ID — handles both toJSON (id) and lean() (_id) responses */
 const getPollId = (poll: Poll): string => poll.id ?? poll._id ?? "";
@@ -286,7 +287,7 @@ export default function DashboardPage() {
       setPollToDelete(null);
     },
     onError: (err: { response?: { data?: { error?: string } } }) =>
-      toast.error(err.response?.data?.error ?? "Failed to delete poll"),
+      toast.error(getApiErrorMessage(err, "Failed to delete poll")),
   });
 
   const closeMutation = useMutation({
@@ -296,7 +297,7 @@ export default function DashboardPage() {
       toast.success("Poll closed");
     },
     onError: (err: { response?: { data?: { error?: string } } }) =>
-      toast.error(err.response?.data?.error ?? "Failed to close poll"),
+      toast.error(getApiErrorMessage(err, "Failed to close poll")),
   });
 
   const publishMutation = useMutation({
@@ -306,7 +307,7 @@ export default function DashboardPage() {
       toast.success("Results published!");
     },
     onError: (err: { response?: { data?: { error?: string } } }) =>
-      toast.error(err.response?.data?.error ?? "Failed to publish results"),
+      toast.error(getApiErrorMessage(err, "Failed to publish results")),
   });
 
   const duplicateMutation = useMutation({
@@ -316,7 +317,7 @@ export default function DashboardPage() {
       toast.success("Poll duplicated");
     },
     onError: (err: { response?: { data?: { error?: string } } }) =>
-      toast.error(err.response?.data?.error ?? "Failed to duplicate poll"),
+      toast.error(getApiErrorMessage(err, "Failed to duplicate poll")),
   });
 
   // Defensive: handle both { polls: Poll[] } and Poll[] response shapes
