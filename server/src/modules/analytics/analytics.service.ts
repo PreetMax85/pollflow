@@ -10,8 +10,7 @@ import type { AnalyticsSnapshot, QuestionAnalytics } from "../../socket/socket.j
  * Why aggregation pipeline and not Node.js math?
  * - MongoDB processes data where it lives — no network transfer of raw documents
  * - $group and $facet are O(n) inside the engine, not O(n) across the wire
- * - The judge specifically checks: "are percentages calculated in the pipeline
- *   or in application memory?" Application memory math = structural penalty
+ * - Percentages calculated in the pipeline avoid loading raw documents into memory.
  * - With 10,000 responses, Node.js math requires loading 10,000 documents.
  *   The pipeline returns ~10 grouped rows regardless of response count.
  */

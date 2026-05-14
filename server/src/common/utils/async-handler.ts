@@ -9,10 +9,7 @@ import { Request, Response, NextFunction, RequestHandler } from "express";
  *
  * Usage:
  *   router.post("/", asyncHandler(myController.create));
- *
- * The judge specifically looks for this pattern as evidence of clean architecture.
- * Its absence means every controller has duplicated try/catch, which is flagged
- * as "fragile" in judge reasoning.
+
  */
 export const asyncHandler =
   (fn: RequestHandler): RequestHandler =>
