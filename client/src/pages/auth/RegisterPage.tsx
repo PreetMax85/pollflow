@@ -77,10 +77,13 @@ export default function RegisterPage() {
       setAuth(response.data.user, response.data.accessToken);
       toast.success(`Account created! Welcome, ${response.data.user.name}!`);
       navigate(from, { replace: true });
-    } catch (error) {
-      const message =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Registration failed. Please try again.";
+    } catch (err) {
+      const error = err as { response?: { status?: number; data?: { error?: string } } };
+      const status = error.response?.status;
+      let message: string;
+      if (status === 409) message = "An account with this email already exists. Try logging in instead.";
+      else if (status === 429) message = "Too many attempts. Please wait a few minutes and try again.";
+      else message = error.response?.data?.error ?? "Registration failed. Please try again.";
       toast.error(message);
     }
   };

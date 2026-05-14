@@ -277,7 +277,8 @@ export default function DashboardPage() {
       toast.success("Poll deleted");
       setPollToDelete(null);
     },
-    onError: () => toast.error("Failed to delete poll"),
+    onError: (err: { response?: { data?: { error?: string } } }) =>
+      toast.error(err.response?.data?.error ?? "Failed to delete poll"),
   });
 
   const closeMutation = useMutation({
@@ -286,7 +287,8 @@ export default function DashboardPage() {
       void queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Poll closed");
     },
-    onError: () => toast.error("Failed to close poll"),
+    onError: (err: { response?: { data?: { error?: string } } }) =>
+      toast.error(err.response?.data?.error ?? "Failed to close poll"),
   });
 
   const publishMutation = useMutation({
@@ -295,7 +297,8 @@ export default function DashboardPage() {
       void queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Results published!");
     },
-    onError: () => toast.error("Failed to publish results"),
+    onError: (err: { response?: { data?: { error?: string } } }) =>
+      toast.error(err.response?.data?.error ?? "Failed to publish results"),
   });
 
   const duplicateMutation = useMutation({
@@ -304,7 +307,8 @@ export default function DashboardPage() {
       void queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Poll duplicated");
     },
-    onError: () => toast.error("Failed to duplicate poll"),
+    onError: (err: { response?: { data?: { error?: string } } }) =>
+      toast.error(err.response?.data?.error ?? "Failed to duplicate poll"),
   });
 
   // Defensive: handle both { polls: Poll[] } and Poll[] response shapes

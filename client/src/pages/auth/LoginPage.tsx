@@ -62,10 +62,13 @@ export default function LoginPage() {
       setAuth(response.data.user, response.data.accessToken);
       toast.success(`Welcome back, ${response.data.user.name}!`);
       navigate(from, { replace: true });
-    } catch (error) {
-      const message =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Login failed. Please try again.";
+    } catch (err) {
+      const error = err as { response?: { status?: number; data?: { error?: string } } };
+      const status = error.response?.status;
+      let message: string;
+      if (status === 401) message = "Invalid email or password.";
+      else if (status === 429) message = "Too many attempts. Please wait a few minutes and try again.";
+      else message = error.response?.data?.error ?? "Login failed. Please try again.";
       toast.error(message);
     }
   };

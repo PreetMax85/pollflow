@@ -347,11 +347,13 @@ export default function CreatePollPage() {
       await queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Poll created!");
       // ✅ backend returns data: Poll directly
-      navigate(`/polls/${response.data.id}/analytics`);
-    } catch (error) {
-      const message =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Failed to create poll.";
+      const pollId = response.data.id ?? response.data._id ?? "";
+      navigate(`/polls/${pollId}/analytics`);
+    } catch (err) {
+      const error = err as { response?: { status?: number; data?: { error?: string } } };
+      const status = error.response?.status;
+      if (status === 401) { navigate("/auth/login", { replace: true }); return; }
+      const message = error.response?.data?.error ?? "Failed to create poll. Please try again.";
       toast.error(message);
     }
   };
