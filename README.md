@@ -53,7 +53,7 @@ PollFlow allows users to:
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
+|---|---|---|
 | Frontend | React 19, TypeScript (strict), Vite, Tailwind CSS v4, shadcn/ui |
 | State | Zustand (auth store, token in memory — never localStorage) |
 | Data fetching | TanStack Query v5 |
@@ -64,7 +64,10 @@ PollFlow allows users to:
 | Database | MongoDB Atlas (Mongoose ODM) |
 | Real-time (server) | Socket.io (poll rooms, typed events) |
 | Auth | JWT dual-token (access 15m / refresh 7d), httpOnly cookie, token blocklist |
+| Email | Resend (transactional emails — password reset) |
 | Validation | Zod (server + client) |
+| Fonts | Inter (body), DM Serif Display (headings) |
+| Domains | pollflow.jdevs.codes (frontend), api.pollflow.jdevs.codes (backend) |
 | Deployment | Railway (Express) + Vercel (React) |
 
 ---
@@ -414,7 +417,7 @@ The only JS-side processing after this: merging question/option text (stored in 
 ### Security Measures
 
 | Measure | Implementation |
-|---|---|
+|---|---|---|
 | Password hashing | bcryptjs, salt rounds from env (min 10) |
 | JWT secrets | Minimum 32-character requirement enforced by Zod at startup |
 | Token type confusion prevention | `type: "access" \| "refresh"` claim in every token |
@@ -426,6 +429,9 @@ The only JS-side processing after this: merging question/option text (stored in 
 | Input validation | Zod schemas on every endpoint |
 | Cookie security | httpOnly, secure (production), sameSite: none, 7d maxAge |
 | Env validation | Zod validates all env vars at startup — process exits on missing vars |
+| Global error handler | Catches Zod validation errors, ApiError, and MongoServerError (E11000) — consistent `{ success, error }` shape |
+| asyncHandler wrapper | Eliminates duplicated try/catch in every controller — forwards errors to global handler |
+| optionalAuth middleware | Single response endpoint handles both anonymous guests and authenticated users without code duplication |
 
 ---
 
@@ -599,7 +605,13 @@ Every form in the app (login, register, create poll, edit poll) uses `react-hook
 
 The poll creation form uses nested `useFieldArray` for dynamic questions and options, with `useFormContext` inside child components to read/write form state without prop drilling.
 
-#### 7. Shareable results card — html2canvas with off-screen DOM
+#### 7. Dark mode with next-themes
+
+The app uses `next-themes` with a `class`-based strategy and `system` default. Toggling between light and dark themes persists across page loads via the `prefers-color-scheme` media query. All shadcn/ui components use CSS variables (`--background`, `--foreground`, etc.) that switch between `oklch` color sets in light and dark `:root` blocks, so every component inherits the correct theme without prop drilling or context.
+
+The theme toggle lives in the authenticated app shell (`AppLayout.tsx`) — a dropdown menu item switches between light and dark modes seamlessly.
+
+#### 8. Shareable results card — html2canvas with off-screen DOM
 
 After a poll is published, a "Share Results" button generates a styled 1200px-wide PNG card. The card contains the poll title, total response count, per-option progress bars with percentages, a winner highlight, and PollFlow branding.
 
@@ -665,10 +677,17 @@ VITE_API_URL=http://localhost:8080
 ## Deployment
 
 | Service | Platform | Root Directory | Build Command | Start Command |
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 | Frontend | [Vercel](https://vercel.com) | `client/` | `npm run build` | — (static) |
 | Backend | [Railway](https://railway.app) | `server/` | `npm run build` | `npm start` |
 | Database | [MongoDB Atlas](https://mongodb.com/atlas) | — | — | — |
+
+### Production Domains
+
+| Service | Domain |
+|---|---|
+| Frontend | [pollflow.jdevs.codes](https://pollflow.jdevs.codes) |
+| Backend API | [api.pollflow.jdevs.codes](https://api.pollflow.jdevs.codes/api/v1) |
 
 ### Environment Variables
 
@@ -703,6 +722,6 @@ The backend's `CLIENT_URL` env var locks CORS to the Vercel production origin �
 ## Known Limitations
 
 - **Railway free tier cold start:** The backend may take a few seconds to respond after inactivity (Railway sleeps free-tier services). The first request after a period of no traffic will be slow.
-- **Email delivery requires Resend domain verification:** Forgot-password generates a reset token and sends it via Resend. In development without `RESEND_API_KEY`, the reset link is logged to the console and returned in the API response. In production, set `RESEND_API_KEY` and verify a sending domain in Resend's dashboard.
+- **Resend API key required for email delivery:** Forgot-password sends emails via Resend using `RESEND_API_KEY`. In development, set it in your `.env` to test real email. Without it, the reset link falls back to the console log (dev mode only). The sending domain must be verified in Resend's dashboard.
 - **Poll editing is restricted:** Only `active` polls can be edited. Editing does not retroactively affect already-submitted responses.
 - **Anonymous duplicate prevention:** Authenticated polls use DB-level unique index for deduplication. Anonymous polls use IP-based rate limiting — not a hard guarantee against re-submission.
