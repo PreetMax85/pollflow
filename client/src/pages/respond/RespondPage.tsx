@@ -283,7 +283,7 @@ export default function RespondPage() {
       const status = err.response?.status;
       if (status === 409) toast.error("You have already responded to this poll.");
       else if (status === 401) toast.error("You need to be logged in to respond.");
-      else toast.error(err.response?.data?.error ?? "Failed to submit.");
+      else toast.error(err.response?.data?.error ?? "Failed to submit response.");
     },
   });
 

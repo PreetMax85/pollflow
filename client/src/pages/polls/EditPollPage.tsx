@@ -243,10 +243,12 @@ export default function EditPollPage() {
       await pollsApi.update(pollId, payload);
       toast.success("Poll updated!");
       navigate("/dashboard");
-    } catch (error) {
-      const message =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message
-        ?? "Failed to update poll.";
+    } catch (err) {
+      const error = err as { response?: { status?: number; data?: { error?: string } } };
+      const status = error.response?.status;
+      let message: string;
+      if (status === 403) message = "You don't have permission to edit this poll.";
+      else message = error.response?.data?.error ?? "Failed to update poll. Please try again.";
       toast.error(message);
     }
   };

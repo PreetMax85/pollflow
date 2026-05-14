@@ -269,10 +269,11 @@ export default function CreatePollPage() {
       toast.success("Poll created!");
       // ✅ backend returns data: Poll directly
       navigate(`/polls/${response.data.id}/analytics`);
-    } catch (error) {
-      const message =
-        (error as { response?: { data?: { message?: string } } })
-          ?.response?.data?.message ?? "Failed to create poll.";
+    } catch (err) {
+      const error = err as { response?: { status?: number; data?: { error?: string } } };
+      const status = error.response?.status;
+      if (status === 401) { navigate("/login"); return; }
+      const message = error.response?.data?.error ?? "Failed to create poll. Please try again.";
       toast.error(message);
     }
   };
