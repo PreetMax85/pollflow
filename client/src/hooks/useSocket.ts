@@ -65,6 +65,8 @@ const getSocket = (): PollSocket => {
     socketSingleton = io(SOCKET_URL, {
       withCredentials: true,
       autoConnect: false,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
       timeout: 20000,
     });
   }
@@ -155,9 +157,11 @@ export const useSocket = ({
       joinRooms();
     };
     const handleDisconnect = (): void => setIsConnected(false);
+    const handleConnectError = (): void => setIsConnected(false);
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
 
     if (!socket.connected) {
       socket.connect();
@@ -182,6 +186,7 @@ export const useSocket = ({
       socket.off("room:joined", handleRoomJoined);
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
     };
   }, [pollId, admin]);
 
