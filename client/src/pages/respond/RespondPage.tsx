@@ -389,7 +389,7 @@ export default function RespondPage() {
               </Badge>
             )}
           </div>
-          <h1 className="landing-heading text-2xl font-bold tracking-tight">{poll.title}</h1>
+          <h1 className="landing-heading text-2xl">{poll.title}</h1>
           {poll.description && <p className="mt-2 text-muted-foreground">{poll.description}</p>}
           <p className="mt-3 text-xs text-muted-foreground">
             {answered} of {totalQuestions} question{totalQuestions !== 1 ? "s" : ""} answered

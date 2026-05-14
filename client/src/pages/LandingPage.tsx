@@ -913,8 +913,8 @@ export default function LandingPage() {
         .d3  { animation-delay: 0.30s; }
         .d4  { animation-delay: 0.44s; }
 
-        /* Scoped so Fraunces only applies inside the landing page, never bleeds into app */
-        .landing .landing-heading { font-family: 'Fraunces', Georgia, serif; }
+        /* Scoped so DM Serif Display only applies inside the landing page, never bleeds into app */
+        .landing .landing-heading { font-family: 'DM Serif Display', Georgia, serif; }
 
         .ctabtn { transition: opacity 0.15s, transform 0.15s; }
         .ctabtn:hover { opacity: 0.9; transform: translateY(-1px); }
@@ -1017,7 +1017,7 @@ export default function LandingPage() {
             </div>
 
             <h1
-              className="landing-heading au d1 mb-5 text-5xl leading-[1.06] tracking-tight lg:text-6xl xl:text-7xl"
+              className="landing-heading au d1 mb-5 text-5xl leading-[1.06] lg:text-6xl xl:text-7xl"
               style={{ color: "#F0FDFA" }}
             >
               See your poll results{" "}
@@ -1075,7 +1075,7 @@ export default function LandingPage() {
               Inside PollFlow
             </p>
             <h2
-              className="landing-heading text-4xl tracking-tight lg:text-5xl"
+              className="landing-heading text-4xl lg:text-5xl"
               style={{ color: "#F0FDFA" }}
             >
               Built for clarity, not complexity.
@@ -1136,7 +1136,7 @@ export default function LandingPage() {
           {/* CHANGED: "Sound familiar?" → "Before PollFlow." */}
           <div className="mb-10 text-center">
             <h2
-              className="landing-heading text-3xl tracking-tight lg:text-4xl"
+              className="landing-heading text-3xl lg:text-4xl"
               style={{ color: "#F0FDFA" }}
             >
               Before PollFlow.
@@ -1189,7 +1189,7 @@ export default function LandingPage() {
               What people say
             </p>
             <h2
-              className="landing-heading text-4xl tracking-tight lg:text-5xl"
+              className="landing-heading text-4xl lg:text-5xl"
               style={{ color: "#F0FDFA" }}
             >
               Real polls. Real results.
@@ -1255,7 +1255,7 @@ export default function LandingPage() {
               How it works
             </p>
             <h2
-              className="landing-heading text-4xl tracking-tight lg:text-5xl"
+              className="landing-heading text-4xl lg:text-5xl"
               style={{ color: "#F0FDFA" }}
             >
               Four steps, two minutes.
@@ -1308,7 +1308,7 @@ export default function LandingPage() {
               Features
             </p>
             <h2
-              className="landing-heading text-4xl tracking-tight lg:text-5xl"
+              className="landing-heading text-4xl lg:text-5xl"
               style={{ color: "#F0FDFA" }}
             >
               Everything you actually need.
@@ -1329,7 +1329,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-14 text-center">
             <h2
-              className="landing-heading text-4xl tracking-tight lg:text-5xl"
+              className="landing-heading text-4xl lg:text-5xl"
               style={{ color: "#F0FDFA" }}
             >
               Who uses PollFlow?
@@ -1384,7 +1384,7 @@ export default function LandingPage() {
             />
             <div className="relative">
               <h2
-                className="landing-heading mb-4 text-4xl tracking-tight lg:text-5xl"
+                className="landing-heading mb-4 text-4xl lg:text-5xl"
                 style={{ color: "#F0FDFA" }}
               >
                 Ready to run your first poll?

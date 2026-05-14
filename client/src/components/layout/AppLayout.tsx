@@ -128,6 +128,7 @@ export default function AppLayout() {
                 <DropdownMenuItem
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                   className="cursor-pointer"
+                  aria-label="Toggle theme"
                 >
                   {theme === "dark" ? (
                     <>

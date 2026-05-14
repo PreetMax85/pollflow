@@ -106,7 +106,7 @@ export class AuthService {
       const { Resend } = await import("resend");
       const resend = new Resend(env.RESEND_API_KEY);
       await resend.emails.send({
-        from: "PollFlow <noreply@pollflow.tech>",
+        from: "PollFlow <noreply@mail.pollflow.jdevs.codes>",
         to: data.email,
         subject: "Reset your PollFlow password",
         html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 15 minutes.</p>`,

@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
             <BarChart3 className="h-5 w-5 text-primary-foreground" />
           </div>
-          <h1 className="landing-heading text-2xl font-bold tracking-tight">PollFlow</h1>
+          <h1 className="landing-heading text-2xl">PollFlow</h1>
         </div>
 
         <Card>

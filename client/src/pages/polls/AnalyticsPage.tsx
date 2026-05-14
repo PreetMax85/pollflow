@@ -428,7 +428,7 @@ export default function AnalyticsPage() {
               <ArrowLeft className="mr-1 h-4 w-4" /> Dashboard
             </Link>
           </Button>
-          <h1 className="landing-heading text-2xl font-bold tracking-tight">
+          <h1 className="landing-heading text-2xl">
             {analytics.pollTitle}
           </h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -659,7 +659,7 @@ export default function AnalyticsPage() {
 
       {analytics.questions.length > 0 && (
         <div className="space-y-4">
-          <h2 className="landing-heading text-lg font-semibold">Question Breakdown</h2>
+          <h2 className="landing-heading text-lg">Question Breakdown</h2>
           {analytics.questions.map((question, index) => (
             <QuestionCard
               key={question.questionId}

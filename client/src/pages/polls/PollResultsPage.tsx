@@ -127,7 +127,7 @@ export default function PollResultsPage() {
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
               <Globe className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h2 className="landing-heading text-lg font-semibold">Results not available</h2>
+            <h2 className="landing-heading text-lg">Results not available</h2>
             <p className="text-sm text-muted-foreground max-w-sm">
               These results haven&apos;t been published yet, or the poll doesn&apos;t exist.
             </p>

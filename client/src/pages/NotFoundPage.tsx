@@ -8,7 +8,7 @@ export default function NotFoundPage() {
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
         <BarChart3 className="h-6 w-6 text-primary-foreground" />
       </div>
-      <h1 className="landing-heading text-5xl font-bold tracking-tight">404</h1>
+      <h1 className="landing-heading text-5xl">404</h1>
       <p className="text-muted-foreground max-w-sm">
         This page doesn't exist or you don't have permission to view it.
       </p>

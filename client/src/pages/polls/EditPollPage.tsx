@@ -346,7 +346,7 @@ export default function EditPollPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="landing-heading text-2xl font-bold tracking-tight">Edit poll</h1>
+        <h1 className="landing-heading text-2xl">Edit poll</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Changes apply immediately. Existing responses are preserved.
         </p>
@@ -455,7 +455,7 @@ export default function EditPollPage() {
           </Card>
 
           <div className="space-y-3">
-            <h2 className="landing-heading text-base font-semibold">
+            <h2 className="landing-heading text-base">
               Questions{" "}
               <span className="text-muted-foreground font-normal text-sm">
                 ({questionFields.length})

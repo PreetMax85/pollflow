@@ -359,7 +359,7 @@ export default function CreatePollPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="landing-heading text-2xl font-bold tracking-tight">Create a poll</h1>
+        <h1 className="landing-heading text-2xl">Create a poll</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Build your poll, set an expiry, and share the link.
         </p>
@@ -486,7 +486,7 @@ export default function CreatePollPage() {
 
           {/* Questions */}
           <div className="space-y-3">
-            <h2 className="landing-heading text-base font-semibold">
+            <h2 className="landing-heading text-base">
               Questions{" "}
               <span className="text-muted-foreground font-normal text-sm">
                 ({questionFields.length})
