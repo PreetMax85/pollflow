@@ -245,6 +245,10 @@ export default function AnalyticsPage() {
 
   const [liveData, setLiveData] = useState<FullAnalytics | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
+
+  useEffect(() => {
+    if (initial) setLiveData(initial);
+  }, [initial]);
   const localPublishRef = useRef(0);
 
   const analytics = liveData ?? initial ?? null;
