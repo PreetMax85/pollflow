@@ -160,30 +160,30 @@ pollflow/
 │   └── src/
 │       ├── api/                     # Axios instance + typed API functions
 │       ├── components/ui/           # shadcn/ui auto-generated components
-│       ├── hooks/                   # useSocket, useAuth, usePoll
+│       ├── hooks/                   # useSocket, useCountdown, useResultsCardExport
 │       ├── pages/                   # auth/, dashboard/, polls/, respond/
 │       ├── store/                   # Zustand stores (auth token in memory)
 │       └── types/                   # Shared TypeScript interfaces
 │
-    └── server/                          # Express API (deployed to Railway)
-    └── src/
-        ├── common/
-        │   ├── config/
-        │   │   └── env.ts           # Zod-validated env — crashes fast on missing vars
-        │   ├── db/
-        │   │   └── index.ts         # Mongoose connection + graceful shutdown
-        │   ├── middleware/
-        │   │   ├── authenticate.middleware.ts      # requireAuth — verifies + blocklist check
-        │   │   ├── optional-auth.middleware.ts     # optionalAuth — attaches user if present
-        │   │   ├── error.middleware.ts             # Global error handler (last app.use)
-        │   │   └── rate-limit.ts                  # Per-route rate limiters
-        │   └── utils/
-        │       ├── ApiError.ts          # Typed error class with factory methods
-        │       ├── ApiResponse.ts       # Consistent response shape
-        │       ├── async-handler.ts     # Wraps async controllers, forwards errors
-        │       └── jwt.ts               # Token generation, verification, jti injection
-        │
-        └── modules/
+├── server/                          # Express API (deployed to Railway)
+│   └── src/
+│       ├── common/
+│       │   ├── config/
+│       │   │   └── env.ts           # Zod-validated env — crashes fast on missing vars
+│       │   ├── db/
+│       │   │   └── index.ts         # Mongoose connection + graceful shutdown
+│       │   ├── middleware/
+│       │   │   ├── authenticate.middleware.ts      # requireAuth — verifies + blocklist check
+│       │   │   ├── optional-auth.middleware.ts     # optionalAuth — attaches user if present
+│       │   │   ├── error.middleware.ts             # Global error handler (last app.use)
+│       │   │   └── rate-limit.ts                  # Per-route rate limiters
+│       │   └── utils/
+│       │       ├── ApiError.ts          # Typed error class with factory methods
+│       │       ├── ApiResponse.ts       # Consistent response shape
+│       │       ├── async-handler.ts     # Wraps async controllers, forwards errors
+│       │       └── jwt.ts               # Token generation, verification, jti injection
+│       │
+│       └── modules/
             ├── auth/
             │   ├── user.schema.ts             # Mongoose User model
             │   ├── token-blocklist.schema.ts  # Revoked JTIs with TTL index
@@ -228,7 +228,7 @@ pollflow/
 | `responses` | Separate collection | Grow unboundedly, queried independently for analytics, aggregation pipelines need them as top-level documents |
 | `tokenblocklists` | Separate collection | TTL-indexed, auto-deleted at token expiry time |
 
-#### Collections
+#### Entity-Relationship Diagram
 
 ```mermaid
 erDiagram
@@ -254,39 +254,20 @@ erDiagram
         date expiresAt
         date publishedAt "nullable"
         number totalResponses "$inc atomic"
-        array questions "embedded"
+        array questions "embedded subdocuments"
         date createdAt
         date updatedAt
-    }
-
-    POLL_QUESTIONS {
-        ObjectId _id
-        string text
-        boolean isRequired
-        number order
-        array options "embedded"
-    }
-
-    POLL_OPTIONS {
-        ObjectId _id
-        string text
-        number order
     }
 
     RESPONSES {
         ObjectId _id PK
         ObjectId pollId FK
         ObjectId respondentId FK "sparse nullable"
-        array answers "embedded"
+        array answers "embedded subdocuments"
         boolean isAnonymous
         string ipAddress "select:false"
         date submittedAt
         date createdAt
-    }
-
-    RESPONSE_ANSWERS {
-        ObjectId questionId
-        ObjectId optionId
     }
 
     TOKENBLOCKLISTS {
@@ -300,9 +281,6 @@ erDiagram
     USERS ||--o{ POLLS : "creates"
     USERS ||--o{ RESPONSES : "submits"
     POLLS ||--o{ RESPONSES : "receives"
-    POLLS ||--|| POLL_QUESTIONS : "embeds"
-    POLL_QUESTIONS ||--|| POLL_OPTIONS : "embeds"
-    RESPONSES ||--|| RESPONSE_ANSWERS : "embeds"
     USERS ||--o{ TOKENBLOCKLISTS : "revokes"
 ```
 
@@ -581,6 +559,7 @@ Option percentages and per-question answer counts are computed inside MongoDB us
     ],
     dailyTimeline: [
       { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$submittedAt" } }, count: { $sum: 1 } } },
+      { $project: { _id: 0, date: "$_id", count: 1 } },
       { $sort: { date: 1 } }
     ],
     anonymousBreakdown: [
