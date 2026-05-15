@@ -184,10 +184,6 @@ export class AnalyticsService {
       questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]),
     );
 
-    // Merge question/option text from poll document
-    // The pipeline gives us counts by ObjectId — we attach human-readable text
-    // from the poll's embedded docs. Total answers per question come from the
-    // pipeline's questionTotals facet, not from a JS reduce.
     const questions = AnalyticsService.mergeQuestionData(
       poll.questions,
       answerBreakdown,
@@ -235,7 +231,7 @@ export class AnalyticsService {
   static async getAnalyticsSnapshot(pollId: string): Promise<AnalyticsSnapshot> {
     const poll = await Poll.findById(pollId).select("questions totalResponses").lean();
 
-    if (!poll) return { totalResponses: 0, questions: [] };
+    if (!poll) return { totalResponses: 0, questions: [], dailyTimeline: [] };
 
     const pipeline: PipelineStage[] = [
       { $match: { pollId: new Types.ObjectId(pollId) } },
@@ -277,6 +273,16 @@ export class AnalyticsService {
                 totalAnswers: 1,
               },
             },
+          ],
+          dailyTimeline: [
+            {
+              $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$submittedAt" } },
+                count: { $sum: 1 },
+              },
+            },
+            { $project: { _id: 0, date: "$_id", count: 1 } },
+            { $sort: { date: 1 } },
           ],
         },
       },
@@ -330,13 +336,14 @@ export class AnalyticsService {
       questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]),
     );
 
+    const dailyTimeline: { date: string; count: number }[] = result?.dailyTimeline ?? [];
     const questions = AnalyticsService.mergeQuestionData(
       poll.questions,
       answerBreakdown,
       questionTotalMap,
     );
 
-    return { totalResponses, questions };
+    return { totalResponses, questions, dailyTimeline };
   }
 
   /**

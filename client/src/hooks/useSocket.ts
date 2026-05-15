@@ -27,6 +27,7 @@ export interface AnalyticsUpdatePayload {
   pollId: string;
   totalResponses: number;
   questions: QuestionAnalytics[];
+  dailyTimeline: { date: string; count: number }[];
   timestamp: string;
 }
 

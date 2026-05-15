@@ -57,6 +57,7 @@ export interface QuestionAnalytics {
 export interface AnalyticsSnapshot {
   totalResponses: number;
   questions: QuestionAnalytics[];
+  dailyTimeline: { date: string; count: number }[];
 }
 
 let io: SocketServer<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
