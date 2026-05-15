@@ -23,15 +23,12 @@ A production-grade full-stack polling and feedback platform. Create polls, colle
   - [Real-Time System](#real-time-system)
   - [Analytics Pipeline](#analytics-pipeline)
   - [Security Measures](#security-measures)
-  - [Backend Setup](#backend-setup)
 - [Frontend](#frontend)
   - [Architecture](#frontend-architecture)
   - [Folder Structure](#frontend-folder-structure)
   - [Key Technical Decisions](#key-technical-decisions)
   - [Pages](#pages)
-  - [Frontend Setup](#frontend-setup)
 - [Deployment](#deployment)
-- [Known Limitations](#known-limitations)
 
 ---
 
@@ -66,12 +63,17 @@ cd client && cp .env.example .env  # VITE_API_URL=http://localhost:8080
 npm install && npm run dev          # http://localhost:5173
 ```
 
+Generate JWT secrets (run twice — one for access, one for refresh):
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
 **Prerequisites:** Node.js 20+, MongoDB Atlas URI (free tier works)
 
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|---|
+|---|---|
 | Frontend | React 19, TypeScript (strict), Vite, Tailwind CSS v4, shadcn/ui |
 | State | Zustand (auth store, token in memory — never localStorage) |
 | Data fetching | TanStack Query v5 |
@@ -602,7 +604,7 @@ The only JS-side processing after this: merging question/option text (stored in 
 ### Security Measures
 
 | Measure | Implementation |
-|---|---|---|
+|---|---|
 | Password hashing | bcryptjs, salt rounds from env (min 10) |
 | JWT secrets | Minimum 32-character requirement enforced by Zod at startup |
 | Token type confusion prevention | `type: "access" \| "refresh"` claim in every token |
@@ -619,23 +621,6 @@ The only JS-side processing after this: merging question/option text (stored in 
 | optionalAuth middleware | Single response endpoint handles both anonymous guests and authenticated users without code duplication |
 | Graceful shutdown | SIGTERM/SIGINT closes HTTP server → Socket.io → MongoDB in order |
 | Unhandled rejection handler | `process.on("unhandledRejection")` — logs and prevents Node crash on rejected promises |
-
----
-
-### Backend Setup
-
-```bash
-cd server
-cp .env.example .env
-npm install
-npm run dev       # http://localhost:8080
-```
-
-Generate JWT secrets:
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-Run twice — one for access secret, one for refresh secret.
 
 ---
 
@@ -828,7 +813,7 @@ Button click → useResultsCardExport.exportCard()
 ### Pages
 
 | Route | Auth | Description |
-|---|---|---|---|
+|---|---|---|
 | `/auth/login` | Public only | Login form. Redirects to `location.state.from` on success |
 | `/auth/register` | Public only | Register form. Redirects to `location.state.from` on success |
 | `/auth/forgot-password` | Public only | Request password reset — sends reset link |
@@ -843,28 +828,10 @@ Button click → useResultsCardExport.exportCard()
 
 ---
 
-### Frontend Setup
-
-```bash
-cd client
-cp .env.example .env
-# Set VITE_API_URL=http://localhost:8080
-npm install
-npm run dev       # http://localhost:5173
-```
-
-**`client/.env.example`**
-```env
-# Backend base URL — no trailing slash
-VITE_API_URL=http://localhost:8080
-```
-
----
-
 ## Deployment
 
 | Service | Platform | Root Directory | Build Command | Start Command |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | Frontend | [Vercel](https://vercel.com) | `client/` | `npm run build` | — (static) |
 | Backend | [Railway](https://railway.app) | `server/` | `npm run build` | `npm start` |
 | Database | [MongoDB Atlas](https://mongodb.com/atlas) | — | — | — |
@@ -904,11 +871,3 @@ Railway injects `PORT` automatically — do not set it manually. The health endp
 
 The backend's `CLIENT_URL` env var locks CORS to the Vercel production origin — no wildcard. The refresh token cookie uses `sameSite: none` (required for cross-domain httpOnly cookies) with `secure: true` in production.
 
----
-
-## Known Limitations
-
-- **Railway cold start:** The backend may take a few seconds to respond after a period of no traffic (Railway scales to zero on free-tier services after inactivity). The first request after idle time will be slow.
-- **Resend API key optional in development:** Forgot-password sends emails via Resend when `RESEND_API_KEY` is set. In development without it, the reset link is returned in the API response as `mockEmailContent` and displayed directly in the UI as a clickable link. The sending domain must be verified in Resend's dashboard for production email delivery.
-- **Poll editing is restricted:** Only `active` polls can be edited. Editing does not retroactively affect already-submitted responses.
-- **Anonymous duplicate prevention:** Authenticated polls use DB-level unique index for deduplication. Anonymous polls use IP-based rate limiting — not a hard guarantee against re-submission.
