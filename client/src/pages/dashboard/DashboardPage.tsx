@@ -88,9 +88,13 @@ function PollCard({
   const expiryDate = new Date(poll.expiresAt);
   const respondUrl = `${window.location.origin}/polls/${getPollId(poll)}/respond`;
 
-  const handleCopyLink = () => {
-    void navigator.clipboard.writeText(respondUrl);
-    toast.success("Link copied to clipboard");
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(respondUrl);
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Failed to copy link");
+    }
   };
 
   return (

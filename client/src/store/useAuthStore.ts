@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   // Actions
   setAuth: (user, accessToken) => set({ user, accessToken, isAuthenticated: true }),
 
-  setAccessToken: (accessToken) => set({ accessToken, isAuthenticated: true }),
+  setAccessToken: (accessToken) => set({ accessToken }),
 
   clearAuth: () => set({ accessToken: null, user: null, isAuthenticated: false }),
 }));

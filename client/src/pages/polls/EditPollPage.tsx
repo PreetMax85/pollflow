@@ -319,17 +319,12 @@ export default function EditPollPage() {
   const onSubmit = async (values: EditPollFormValues) => {
     if (!pollId) return;
     try {
-      const { description, ...rest } = values;
-      const payload = {
-        ...rest,
-        ...(description ? { description } : {}),
+      const payload: Record<string, unknown> = {
+        title: values.title,
         expiresAt: new Date(values.expiresAt).toISOString(),
-        questions: values.questions.map((q, qi) => ({
-          ...q,
-          order: qi,
-          options: q.options.map((o, oi) => ({ ...o, order: oi })),
-        })),
       };
+      if (values.description) payload.description = values.description;
+
       await pollsApi.update(pollId, payload);
       toast.success("Poll updated!");
       navigate("/dashboard");
