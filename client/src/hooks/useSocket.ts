@@ -52,6 +52,7 @@ interface ClientToServerEvents {
   "join:poll": (pollId: string) => void;
   "join:poll:admin": (payload: { pollId: string; token: string }) => void;
   "leave:poll": (pollId: string) => void;
+  "leave:poll:admin": (pollId: string) => void;
 }
 
 type PollSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -59,6 +60,7 @@ type PollSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 const SOCKET_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 let socketSingleton: PollSocket | null = null;
+let subscriberCount = 0;
 
 const getSocket = (): PollSocket => {
   if (!socketSingleton) {
@@ -120,25 +122,32 @@ export const useSocket = ({
   });
 
   useEffect(() => {
+    subscriberCount++;
+
     const socket = getSocket();
 
     const handleResponseCount = (payload: ResponseCountPayload): void => {
+      if (payload.pollId !== pollId) return;
       handlersRef.current.onResponseCount?.(payload);
     };
 
     const handleAnalyticsUpdate = (payload: AnalyticsUpdatePayload): void => {
+      if (payload.pollId !== pollId) return;
       handlersRef.current.onAnalyticsUpdate?.(payload);
     };
 
     const handlePollPublished = (payload: PollStatusPayload): void => {
+      if (payload.pollId !== pollId) return;
       handlersRef.current.onPollPublished?.(payload);
     };
 
     const handlePollExpired = (payload: PollStatusPayload): void => {
+      if (payload.pollId !== pollId) return;
       handlersRef.current.onPollExpired?.(payload);
     };
 
     const handleRoomJoined = (payload: RoomJoinedPayload): void => {
+      if (payload.pollId !== pollId) return;
       handlersRef.current.onRoomJoined?.(payload);
     };
 
@@ -178,6 +187,7 @@ export const useSocket = ({
 
     return (): void => {
       socket.emit("leave:poll", pollId);
+      if (admin) socket.emit("leave:poll:admin", pollId);
 
       socket.off("poll:response-count", handleResponseCount);
       socket.off("poll:analytics-update", handleAnalyticsUpdate);
@@ -187,6 +197,11 @@ export const useSocket = ({
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
+
+      subscriberCount--;
+      if (subscriberCount === 0) {
+        socket.disconnect();
+      }
     };
   }, [pollId, admin]);
 
