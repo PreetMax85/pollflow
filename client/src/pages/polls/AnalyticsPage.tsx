@@ -590,7 +590,7 @@ export default function AnalyticsPage() {
           icon={analytics.status === "published" ? Eye : Clock}
           description={
             analytics.status === "active"
-              ? `Closes ${new Date(analytics.expiresAt).toLocaleDateString()}`
+              ? `Closes ${new Date(analytics.expiresAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}`
               : analytics.status === "published"
                 ? "Results are public"
                 : "No longer accepting responses"

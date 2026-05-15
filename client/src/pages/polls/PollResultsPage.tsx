@@ -101,7 +101,7 @@ export default function PollResultsPage() {
       <header className="border-b border-border">
         <div className="mx-auto max-w-3xl px-4 py-4 flex items-center gap-3">
           <BarChart3 className="h-5 w-5 text-primary" />
-          <span className="font-semibold">PollFlow</span>
+          <Link to="/" className="font-semibold">PollFlow</Link>
           <Badge variant="secondary" className="flex items-center gap-1 ml-auto">
             <Globe className="h-3 w-3" />
             Published results
@@ -180,12 +180,19 @@ export default function PollResultsPage() {
               />
             </div>
 
-            {/* Question cards */}
-            <div className="space-y-4">
-              {analytics.questions.map((q, i) => (
-                <QuestionResultCard key={q.questionId} question={q} index={i} />
-              ))}
-            </div>
+            {analytics.totalResponses === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+                <Users className="h-10 w-10 text-muted-foreground" />
+                <h3 className="font-medium">No responses yet</h3>
+                <p className="text-sm text-muted-foreground">Share the poll link to start collecting responses.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {analytics.questions.map((q, i) => (
+                  <QuestionResultCard key={q.questionId} question={q} index={i} />
+                ))}
+              </div>
+            )}
           </>
         )}
       </main>

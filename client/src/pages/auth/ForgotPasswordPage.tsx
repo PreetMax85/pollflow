@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {mockLink && (
+            {import.meta.env.DEV && mockLink && (
               <div className="rounded-md border bg-muted p-3 text-left text-xs text-muted-foreground break-all">
                 <p className="mb-1 font-medium text-foreground">Mock email (dev mode):</p>
                 <a href={mockLink} className="text-primary underline underline-offset-2">

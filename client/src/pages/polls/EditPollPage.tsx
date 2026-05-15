@@ -6,7 +6,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { PlusCircle, Trash2, GripVertical, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { PlusCircle, Trash2, ArrowUp, ArrowDown, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,9 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
   );
 }
 
-// Schema 
+// Schema
+
+const MAX_OPTIONS = 6;
 
 const optionSchema = z.object({
   text: z.string().min(1, "Option cannot be empty").max(300),
@@ -63,7 +65,7 @@ const optionSchema = z.object({
 const questionSchema = z.object({
   text: z.string().min(3, "Question must be at least 3 characters").max(500),
   isRequired: z.boolean(),
-  options: z.array(optionSchema).min(2, "At least 2 options required"),
+  options: z.array(optionSchema).min(2, "At least 2 options required").max(MAX_OPTIONS, "A question can have at most 6 options"),
 });
 
 const editPollSchema = z.object({
@@ -84,12 +86,15 @@ type EditPollFormValues = z.infer<typeof editPollSchema>;
 
 interface QuestionItemProps {
   questionIndex: number;
+  totalQuestions: number;
   control: Control<EditPollFormValues, unknown, EditPollFormValues>;
   onRemove: () => void;
   canRemove: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }
 
-function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionItemProps) {
+function QuestionItem({ questionIndex, totalQuestions, control, onRemove, canRemove, onMoveUp, onMoveDown }: QuestionItemProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   // useFormContext gives access to watch/setValue without prop-drilling
@@ -105,8 +110,31 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
   return (
     <Card className="border-border">
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+        <div className="flex items-center gap-1.5">
+          {/* Up/Down reorder */}
+          <div className="flex flex-col gap-0.5 shrink-0">
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-5 w-5"
+              onClick={onMoveUp}
+              disabled={questionIndex === 0}
+            >
+              <ArrowUp className="h-3 w-3" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-5 w-5"
+              onClick={onMoveDown}
+              disabled={questionIndex === totalQuestions - 1}
+            >
+              <ArrowDown className="h-3 w-3" />
+            </Button>
+          </div>
+
           <CardTitle className="text-sm font-medium flex-1">Question {questionIndex + 1}</CardTitle>
 
           <Button
@@ -171,7 +199,7 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
 
           <div className="space-y-2">
             <Label className="text-xs">
-              Options <span className="text-muted-foreground">(min. 2)</span>
+              Options <span className="text-muted-foreground">(min. 2, max. {MAX_OPTIONS})</span>
             </Label>
             {optionFields.map((optionField, optionIndex) => (
               <FormField
@@ -214,8 +242,10 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
               variant="outline"
               className="w-full border-dashed"
               onClick={() => appendOption({ text: "" })}
+              disabled={optionFields.length >= MAX_OPTIONS}
             >
-              <PlusCircle className="h-3.5 w-3.5 mr-1.5" /> Add option
+              <PlusCircle className="h-3.5 w-3.5 mr-1.5" />
+              {optionFields.length >= MAX_OPTIONS ? `Max ${MAX_OPTIONS} options` : "Add option"}
             </Button>
           </div>
         </CardContent>
@@ -283,6 +313,7 @@ export default function EditPollPage() {
     fields: questionFields,
     append: appendQuestion,
     remove: removeQuestion,
+    move: moveQuestion,
   } = useFieldArray({ control, name: "questions" });
 
   const onSubmit = async (values: EditPollFormValues) => {
@@ -460,9 +491,12 @@ export default function EditPollPage() {
               <QuestionItem
                 key={field.id}
                 questionIndex={index}
+                totalQuestions={questionFields.length}
                 control={control}
                 onRemove={() => removeQuestion(index)}
                 canRemove={questionFields.length > 1}
+                onMoveUp={() => moveQuestion(index, index - 1)}
+                onMoveDown={() => moveQuestion(index, index + 1)}
               />
             ))}
             <Button

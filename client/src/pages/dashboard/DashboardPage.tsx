@@ -214,6 +214,7 @@ function PollCard({
         <Button
           size="sm"
           variant="ghost"
+          aria-label="Delete poll"
           className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
           onClick={() => onDelete(poll)}
         >
