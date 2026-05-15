@@ -100,7 +100,7 @@ flowchart TD
     Browser["🌐 Browser\nReact 19 + TypeScript + Vite"]
 
     subgraph Frontend["Frontend — Vercel (pollflow.jdevs.codes)"]
-        Router["React Router v6\nProtectedRoute · PublicOnlyRoute"]
+        Router["React Router \nProtectedRoute · PublicOnlyRoute"]
         Pages["Pages\nLazy-loaded, code-split"]
         State["State\nZustand (auth) · TanStack Query (server)"]
         API["API Layer\nAxios + interceptor · plain axios (public)"]
