@@ -635,13 +635,17 @@ export default function AnalyticsPage() {
         </Card>
       )}
 
-      {analytics.dailyTimeline.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Response Timeline</CardTitle>
-            <CardDescription>Daily submission count</CardDescription>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Response Timeline</CardTitle>
+          <CardDescription>Daily submission count</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {analytics.dailyTimeline.length === 0 ? (
+            <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
+              No responses yet
+            </div>
+          ) : (
             <div className="h-48">
               <ResponsiveContainer width="100%" height={192}>
                 <LineChart
@@ -688,9 +692,9 @@ export default function AnalyticsPage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       <Separator />
 
