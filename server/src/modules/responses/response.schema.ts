@@ -1,12 +1,6 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 
-/**
- * IAnswer — a single question's answer within a response.
- *
- * Stores both IDs explicitly so analytics aggregations can group by
- * questionId and optionId without joining to the poll document.
- * This is a deliberate denormalisation for aggregation performance.
- */
+
 export interface IAnswer {
   questionId: Types.ObjectId;
   optionId: Types.ObjectId;
@@ -26,18 +20,6 @@ const answerSchema = new Schema<IAnswer>(
   { _id: false }, // answers are value objects, not entities — no independent ID needed
 );
 
-/**
- * IResponse — a single poll submission.
- *
- * respondentId is optional:
- * - Set when an authenticated user submits (even on anonymous polls,
- *   we store it server-side for duplicate prevention — it is just
- *   excluded from the analytics display if isAnonymous is true)
- * - Undefined when a guest submits to a poll that allows anonymous responses
- *
- * ipAddress is stored for anonymous duplicate mitigation (best-effort,
- * not a hard guarantee — proxies can share IPs). Never exposed via API.
- */
 export interface IResponse extends Document {
   _id: Types.ObjectId;
   pollId: Types.ObjectId;
@@ -63,8 +45,6 @@ const responseSchema = new Schema<IResponse>(
       type: Schema.Types.ObjectId,
       ref: "User",
       // sparse: only index documents where respondentId exists.
-      // Guest submissions don't have one — a non-sparse index would
-      // index all those null values wastefully.
       index: { sparse: true },
     },
 
@@ -123,7 +103,7 @@ const responseSchema = new Schema<IResponse>(
   },
 );
 
-// ─── Indexes ──────────────────────────────────────────────────────────────────
+// Indexes
 
 // Unique compound: one authenticated response per user per poll.
 // sparse: true means the index skips documents where respondentId is absent

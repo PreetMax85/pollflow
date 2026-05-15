@@ -1,11 +1,3 @@
-/**
- * PUBLIC endpoints use plain axios — no auth interceptor, no refresh loop.
- * PRIVATE endpoints use apiClient — gets Bearer token injected automatically.
- *
- * Public:  getPollById, getPublishedResults
- * Private: everything else
- */
-
 import axios from "axios";
 import { apiClient } from "@/api/axios";
 import type { ApiResponse, Poll, CreatePollInput, FullAnalytics, PublishedResults } from "@/types";
@@ -16,7 +8,7 @@ interface MyPollsData {
   polls: Poll[];
 }
 
-// ─── Poll API ─────────────────────────────────────────────────────────────────
+// Poll API
 
 export const pollsApi = {
   /** Private — GET /api/v1/polls/my */
@@ -57,7 +49,7 @@ export const pollsApi = {
     apiClient.post<ApiResponse<Poll>>(`/polls/${pollId}/publish`).then((r) => r.data),
 };
 
-// ─── Analytics API ────────────────────────────────────────────────────────────
+// Analytics API
 
 export const analyticsApi = {
   /** Private — GET /api/v1/analytics/:pollId (creator dashboard) */

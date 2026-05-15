@@ -16,7 +16,7 @@ import {
   Timer,
 } from "lucide-react";
 
-// ─── Live Poll Mock (unchanged) ───────────────────────────────────────────────
+// Live Poll Mock
 
 const MOCK_QUESTION = "What's slowing down your team the most right now?";
 const MOCK_OPTIONS = [
@@ -91,7 +91,6 @@ function LivePollMock() {
       isMounted.current = false;
       clearAllTimeouts();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -176,7 +175,7 @@ function LivePollMock() {
   );
 }
 
-// ─── App Mocks (unchanged) ────────────────────────────────────────────────────
+// App Mocks
 
 function DashboardMock() {
   return (
@@ -571,7 +570,7 @@ function IdentityMock() {
   );
 }
 
-// ─── Feature Showcase (tab hover fix applied) ─────────────────────────────────
+// Feature Showcase
 
 const SHOWCASE_TABS = [
   {
@@ -663,7 +662,7 @@ function FeatureShowcase() {
   );
 }
 
-// ─── Marquee Strip (unchanged) ────────────────────────────────────────────────
+// Marquee Strip
 
 const MARQUEE_ITEMS = [
   { icon: "⚡", text: "Real-time WebSocket updates" },
@@ -712,7 +711,7 @@ function MarqueeStrip() {
   );
 }
 
-// ─── Static data ──────────────────────────────────────────────────────────────
+// Static data
 
 const STEPS = [
   {
@@ -838,7 +837,7 @@ const PAIN_POINTS = [
   "Sharing results means yet another email attachment",
 ];
 
-// ─── 3 Testimonials ───────────────────────────────────────────────────────────
+// 3 Testimonials
 
 const TESTIMONIALS = [
   {
@@ -879,10 +878,9 @@ const AUDIENCES = [
   },
 ];
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// Page
 
 export default function LandingPage() {
-  // Scroll to features section from footer link
   const scrollToFeatures = () => {
     document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -934,7 +932,7 @@ export default function LandingPage() {
 
       <div className="noise" />
 
-      {/* ── Nav ─────────────────────────────────────────────────────── */}
+      {/* Nav */}
       <nav className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2.5">
           <div
@@ -965,7 +963,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── Hero ────────────────────────────────────────────────────── */}
+      {/* Hero */}
       <section className="relative z-10 mx-auto max-w-6xl px-6 pb-20 pt-16">
         <div
           style={{
@@ -1060,7 +1058,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── App preview ─────────────────────────────────────────────── */}
+      {/* App preview */}
       <section
         className="relative z-10 py-24"
         style={{ borderTop: "1px solid rgba(13,148,136,0.1)" }}
@@ -1123,7 +1121,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Pain points ─────────────────────────────────────────────── */}
+      {/* Pain points */}
       <section
         className="relative z-10 py-20"
         style={{
@@ -1132,7 +1130,6 @@ export default function LandingPage() {
         }}
       >
         <div className="mx-auto max-w-6xl px-6">
-          {/* CHANGED: "Sound familiar?" → "Before PollFlow." */}
           <div className="mb-10 text-center">
             <h2
               className="landing-heading text-3xl lg:text-4xl"
@@ -1169,7 +1166,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Marquee strip ───────────────────────────────────────────── */}
+      {/* Marquee strip */}
       <section
         className="relative z-10 py-10"
         style={{ borderBottom: "1px solid rgba(13,148,136,0.1)" }}
@@ -1177,7 +1174,7 @@ export default function LandingPage() {
         <MarqueeStrip />
       </section>
 
-      {/* ── Testimonials — 3 cards ───────────────────────────────────── */}
+      {/* Testimonials */}
       <section className="relative z-10 py-24">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-12 text-center">
@@ -1240,7 +1237,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── How it works ────────────────────────────────────────────── */}
+      {/* How it works */}
       <section
         className="relative z-10 py-24"
         style={{ borderTop: "1px solid rgba(13,148,136,0.1)" }}
@@ -1292,7 +1289,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Feature showcase — id="features" for footer link ────────── */}
+      {/* Feature showcase */}
       <section
         id="features"
         className="relative z-10 py-24"
@@ -1320,7 +1317,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Audiences ───────────────────────────────────────────────── */}
+      {/* Audiences */}
       <section
         className="relative z-10 py-24"
         style={{ borderTop: "1px solid rgba(13,148,136,0.1)" }}
@@ -1356,7 +1353,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA ─────────────────────────────────────────────────────── */}
+      {/* CTA */}
       <section className="relative z-10 py-24">
         <div className="mx-auto max-w-6xl px-6">
           <div
@@ -1421,7 +1418,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────── */}
+      {/* Footer */}
       <footer
         className="relative z-10 py-10"
         style={{ borderTop: "1px solid rgba(13,148,136,0.1)" }}
@@ -1441,7 +1438,6 @@ export default function LandingPage() {
               className="flex items-center gap-6 text-xs"
               style={{ color: "rgba(94,234,212,0.7)" }}
             >
-              {/* FIXED: now correctly scrolls to #features */}
               <button onClick={scrollToFeatures} className="transition-colors hover:text-teal-300">
                 Features
               </button>

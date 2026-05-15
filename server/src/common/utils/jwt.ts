@@ -15,7 +15,7 @@ export interface TokenPayload extends jwt.JwtPayload {
 export const generateAccessToken = (payload: { userId: string }): string => {
   const options = { expiresIn: env.JWT_ACCESS_EXPIRES_IN || "15m" } as jwt.SignOptions;
   return jwt.sign(
-    { ...payload, type: "access", jti: crypto.randomUUID() }, // ← add jti
+    { ...payload, type: "access", jti: crypto.randomUUID() },
     ACCESS_SECRET,
     options,
   );
@@ -29,7 +29,6 @@ export const verifyAccessToken = (token: string): TokenPayload => {
     }
     return decoded;
   } catch (error) {
-    // Distinguish expired vs tampered for logging, but always throw the same error to the client
     if (error instanceof jwt.TokenExpiredError) {
       console.debug("[JWT] Access token expired");
     }
@@ -40,7 +39,7 @@ export const verifyAccessToken = (token: string): TokenPayload => {
 export const generateRefreshToken = (payload: { userId: string }): string => {
   const options = { expiresIn: env.JWT_REFRESH_EXPIRES_IN || "7d" } as jwt.SignOptions;
   return jwt.sign(
-    { ...payload, type: "refresh", jti: crypto.randomUUID() }, // ← add jti
+    { ...payload, type: "refresh", jti: crypto.randomUUID() },
     REFRESH_SECRET,
     options,
   );

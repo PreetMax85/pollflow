@@ -1,7 +1,3 @@
-/**
- * @file src/pages/polls/CreatePollPage.tsx
- */
-
 import { useNavigate } from "react-router-dom";
 import { useForm, useFieldArray, useFormContext } from "react-hook-form";
 import type { Control } from "react-hook-form";
@@ -40,7 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { pollsApi } from "@/api/polls";
 
-// ─── ToggleSwitch ─────────────────────────────────────────────────────────────
+// ToggleSwitch
 // Inline toggle — bypasses Radix UI to avoid data-state/data-checked CSS mismatch.
 
 interface ToggleSwitchProps {
@@ -72,7 +68,7 @@ function ToggleSwitch({ checked, onChange }: ToggleSwitchProps) {
   );
 }
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
+// Schema
 
 const MAX_OPTIONS = 6;
 
@@ -100,7 +96,7 @@ const createPollSchema = z.object({
 
 type CreatePollFormValues = z.infer<typeof createPollSchema>;
 
-// ─── Question Item ────────────────────────────────────────────────────────────
+// Question Item
 // Uses useFormContext so it can read/write form state without prop-drilling.
 
 interface QuestionItemProps {
@@ -122,8 +118,6 @@ function QuestionItem({
 }: QuestionItemProps) {
   const [collapsed, setCollapsed] = useState(false);
 
-  // ✅ useFormContext + watch/setValue — most reliable way to read/write boolean fields
-  // Avoids Controller render-prop issues with Switch components
   const { watch, setValue } = useFormContext<CreatePollFormValues>();
   const isRequired = watch(`questions.${questionIndex}.isRequired`);
 
@@ -289,7 +283,7 @@ function QuestionItem({
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// Page
 
 export default function CreatePollPage() {
   const navigate = useNavigate();
@@ -324,7 +318,6 @@ export default function CreatePollPage() {
     move: moveQuestion,
   } = useFieldArray({ control, name: "questions" });
 
-  // ✅ watch/setValue for top-level boolean switches — no Controller/FormField needed
   const requiresAuth = watch("requiresAuth");
   const isAnonymous = watch("isAnonymous");
 
@@ -343,10 +336,8 @@ export default function CreatePollPage() {
       };
 
       const response = await pollsApi.create(payload);
-      // ✅ Invalidate dashboard query so new poll appears immediately on back-navigate
       await queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Poll created!");
-      // ✅ backend returns data: Poll directly
       const pollId = response.data.id ?? response.data._id ?? "";
       navigate(`/polls/${pollId}/analytics`);
     } catch (err) {

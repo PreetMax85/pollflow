@@ -3,10 +3,7 @@ import { Response, IResponse } from "./response.schema.js";
 import { SubmitResponseInput } from "./dtos/response.dto.js";
 
 export class ResponseRepository {
-  /**
-   * Save a new response to the database.
-   * respondentId and ipAddress are optional — absent for anonymous guests.
-   */
+  // Save a new response to the database.
   static async create(params: {
     pollId: string;
     answers: SubmitResponseInput["answers"];
@@ -41,7 +38,7 @@ export class ResponseRepository {
 
   /**
    * Check if an authenticated user has already responded to a poll.
-   * Uses the sparse unique index — O(1) lookup.
+   * Uses the sparse unique index
    */
   static async hasUserResponded(pollId: string, userId: string): Promise<boolean> {
     const exists = await Response.exists({

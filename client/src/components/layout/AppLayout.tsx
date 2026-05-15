@@ -26,14 +26,14 @@ import {
 import { useAuthStore, selectUser } from "@/store/useAuthStore";
 import { apiClient } from "@/api/axios";
 
-// ─── Nav Links ────────────────────────────────────────────────────────────────
+//  Nav Links 
 
 const NAV_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/polls/create", label: "Create Poll", icon: PlusCircle },
 ] as const;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+//  Helpers 
 
 /** Returns up-to-2-char initials from a display name. */
 const getInitials = (name: string): string =>
@@ -44,7 +44,7 @@ const getInitials = (name: string): string =>
     .join("")
     .toUpperCase();
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component 
 
 export default function AppLayout() {
   const user = useAuthStore(selectUser);
@@ -53,13 +53,11 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
 
-  // ── Logout ──────────────────────────────────────────────────────────────
+  //  Logout
   const handleLogout = async () => {
     try {
       await apiClient.post("/auth/logout");
     } catch {
-      // Even if the server call fails, clear local state so the user
-      // isn't stuck in a broken authenticated-but-revoked limbo.
     } finally {
       clearAuth();
       toast.success("Logged out successfully");
@@ -67,7 +65,7 @@ export default function AppLayout() {
     }
   };
 
-  // ── Nav link class helper ────────────────────────────────────────────────
+  // Nav link class helper 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     [
       "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
@@ -78,7 +76,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ── Top Nav Bar ─────────────────────────────────────────────────── */}
+      {/* Top Nav Bar  */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
           {/* Logo */}
@@ -194,7 +192,7 @@ export default function AppLayout() {
         )}
       </header>
 
-      {/* ── Page Content ────────────────────────────────────────────────── */}
+      {/* Page Content */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <Outlet />
       </main>

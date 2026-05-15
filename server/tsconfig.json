@@ -5,14 +5,12 @@
     "moduleResolution": "NodeNext",
     "types": ["node"],
 
-    /* Output */
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
 
-    /* Strict mode — every flag. Judge specifically looks for strict: true */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -22,7 +20,6 @@
     "noUnusedParameters": true,
     "noImplicitOverride": true,
 
-    /* Interop */
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

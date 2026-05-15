@@ -18,7 +18,6 @@ export class ApiResponse {
     });
   }
 
-  // Added for routes that return paginated lists (like poll lists)
   static paginated<T>(
     res: Response,
     message: string,

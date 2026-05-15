@@ -11,11 +11,6 @@ interface RefreshResponse {
   };
 }
 
-/**
- * Attempt to silently restore the authenticated session.
- * Errors are swallowed intentionally — an expired or missing cookie
- * simply means the user is unauthenticated, which is a valid state.
- */
 export const bootstrapAuth = async (): Promise<void> => {
   try {
     const { data } = await axios.post<RefreshResponse>(

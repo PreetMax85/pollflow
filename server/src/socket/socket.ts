@@ -92,9 +92,8 @@ export const initSocket = (
       console.log(`[Socket] Client connected   : ${socket.id}`);
       socket.data.joinedRooms = new Set();
 
-      // ── join:poll (public room) ──────────────────────────────────────────
+      // join:poll (public room)
       // Anyone can join — receives count updates, publish/expiry events.
-      // Does NOT receive analytics breakdown (option counts/percentages).
       socket.on("join:poll", (pollId: string) => {
         if (!pollId || typeof pollId !== "string" || pollId.trim().length === 0) {
           console.warn(`[Socket] Invalid pollId from ${socket.id}: ${pollId}`);
@@ -111,7 +110,7 @@ export const initSocket = (
         console.log(`[Socket] ${socket.id} joined room : ${room}`);
       });
 
-      // ── join:poll:admin (admin room — creator only) ──────────────────────────
+      // join:poll:admin (admin room — creator only)
       // Requires a valid Bearer token. Server verifies the token, checks that
       // the authenticated user is the poll creator, then joins the admin room.
       // Admin room receives full analytics updates including option breakdowns.
@@ -151,7 +150,7 @@ export const initSocket = (
         }
       });
 
-      // ── leave:poll ─────────────────────────────────────────────────────────
+      // leave:poll
       socket.on("leave:poll", (pollId: string) => {
         if (!pollId || typeof pollId !== "string") return;
 
@@ -182,10 +181,10 @@ export const initSocket = (
   return io;
 };
 
-// ─── Emit Helpers ─────────────────────────────────────────────────────────────
+// Emit Helpers
 
 /**
- * Broadcast response count to the PUBLIC room — non-sensitive, just a number.
+ * Broadcast response count to the PUBLIC room.
  * Admin clients are also in the public room so they receive this too.
  */
 export const emitResponseCount = (pollId: string, totalResponses: number): void => {

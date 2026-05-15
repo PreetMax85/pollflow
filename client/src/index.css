@@ -71,7 +71,6 @@
   --ring: oklch(0.871 0.006 286.286);
 }
 
-/* Landing page theme — dark teal, only applies inside .landing */
 .landing {
   --landing-bg: #0A0F0F;
   --landing-surface: #111918;

@@ -28,7 +28,7 @@ import {
 import { useAuthStore } from "@/store/useAuthStore";
 import { authApi } from "@/api/auth";
 
-// ─── Validation Schema ────────────────────────────────────────────────────────
+// Validation Schema 
 // Mirrors the backend loginSchema exactly.
 
 const loginSchema = z.object({
@@ -38,7 +38,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);

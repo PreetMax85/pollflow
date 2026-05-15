@@ -1,10 +1,4 @@
-/**
- * @file src/types/index.ts
- * Shared TypeScript interfaces mirroring the backend's response shapes.
- * All shapes derived directly from poll.schema.ts + route responses.
- */
-
-// ─── API Envelope ─────────────────────────────────────────────────────────────
+// API Envelope
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -12,7 +6,7 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
+// Auth
 
 export interface AuthUser {
   id: string;
@@ -25,9 +19,7 @@ export interface AuthResponseData {
   accessToken: string;
 }
 
-// ─── Poll ─────────────────────────────────────────────────────────────────────
-// Matches IOption / IQuestion / IPoll from poll.schema.ts.
-// Note: toJSON transform maps _id → id, so frontend always uses `id`.
+// Poll
 
 export type PollStatus = "active" | "expired" | "published";
 
@@ -46,8 +38,8 @@ export interface PollQuestion {
 }
 
 export interface Poll {
-  id: string; // present when Mongoose toJSON transform runs
-  _id?: string; // present when backend uses .lean() — skips toJSON
+  id: string; 
+  _id?: string; 
   title: string;
   description?: string;
   createdBy: string;
@@ -55,15 +47,12 @@ export interface Poll {
   requiresAuth: boolean;
   isAnonymous: boolean;
   status: PollStatus;
-  expiresAt: string; // ISO date string
+  expiresAt: string; 
   publishedAt?: string;
   totalResponses: number;
   createdAt: string;
   updatedAt: string;
 }
-
-// ─── Poll Creation / Update ───────────────────────────────────────────────────
-// What we send TO the backend.
 
 export interface CreateOptionInput {
   text: string;
@@ -81,10 +70,10 @@ export interface CreatePollInput {
   questions: CreateQuestionInput[];
   requiresAuth: boolean;
   isAnonymous: boolean;
-  expiresAt: string; // ISO date string
+  expiresAt: string;
 }
 
-// ─── Analytics ────────────────────────────────────────────────────────────────
+// Analytics 
 
 export interface OptionAnalytics {
   optionId: string;

@@ -1,13 +1,3 @@
-/**
- * @file src/pages/dashboard/DashboardPage.tsx
- *
- * Shows all polls created by the authenticated user.
- * Actions per poll depend on status:
- *   active   → Edit · Analytics · Delete · Copy link
- *   expired  → Analytics · Publish · Delete
- *   published→ Analytics · Results · Delete
- */
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,10 +34,9 @@ import { pollsApi } from "@/api/polls";
 import { selectUser, useAuthStore } from "@/store/useAuthStore";
 import type { Poll, PollStatus } from "@/types";
 
-/** Safely extract poll ID — handles both toJSON (id) and lean() (_id) responses */
 const getPollId = (poll: Poll): string => poll.id ?? poll._id ?? "";
 
-// ─── Status helpers ───────────────────────────────────────────────────────────
+// Status helpers
 
 const STATUS_CONFIG: Record<
   PollStatus,
@@ -70,7 +59,7 @@ const STATUS_CONFIG: Record<
   },
 };
 
-// ─── Poll Card ────────────────────────────────────────────────────────────────
+// Poll Card
 
 interface PollCardProps {
   poll: Poll;
@@ -137,7 +126,6 @@ function PollCard({
       </CardContent>
 
       <CardFooter className="pt-0 flex flex-wrap gap-2">
-        {/* Analytics — always available */}
         <Button
           size="sm"
           variant="outline"
@@ -235,7 +223,7 @@ function PollCard({
   );
 }
 
-// ─── Skeleton loader ──────────────────────────────────────────────────────────
+// Skeleton loader
 
 function PollCardSkeleton() {
   return (
@@ -258,7 +246,7 @@ function PollCardSkeleton() {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// Page 
 
 export default function DashboardPage() {
   const user = useAuthStore(selectUser);

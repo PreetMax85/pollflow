@@ -1,11 +1,3 @@
-/**
- * @file src/pages/polls/PollResultsPage.tsx
- *
- * Public-facing results page. No auth required.
- * Only renders data if poll.status === "published".
- * Uses GET /api/v1/analytics/:pollId/results
- */
-
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart3, Users, ArrowLeft, Globe, ImageDown, Loader2 } from "lucide-react";
@@ -21,7 +13,7 @@ import { useResultsCardExport } from "@/hooks/useResultsCardExport";
 import { analyticsApi } from "@/api/polls";
 import type { QuestionAnalytics, PublishedResults, ApiResponse } from "@/types";
 
-// ─── Question result card ─────────────────────────────────────────────────────
+// Question result card
 
 function QuestionResultCard({ question, index }: { question: QuestionAnalytics; index: number }) {
   const sorted = [...question.options].sort((a, b) => b.count - a.count);
@@ -60,7 +52,7 @@ function QuestionResultCard({ question, index }: { question: QuestionAnalytics; 
   );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// Skeleton
 
 function ResultsSkeleton() {
   return (
@@ -87,7 +79,7 @@ function ResultsSkeleton() {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// Page
 
 export default function PollResultsPage() {
   const { pollId } = useParams<{ pollId: string }>();
@@ -96,7 +88,7 @@ export default function PollResultsPage() {
     queryKey: ["analytics", pollId, "results"],
     queryFn: () => analyticsApi.getPublishedResults(pollId!),
     enabled: !!pollId,
-    retry: false, // 403/404 from server = not published; don't retry
+    retry: false,
   });
 
   const analytics = data?.data;

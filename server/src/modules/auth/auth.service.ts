@@ -63,7 +63,7 @@ export class AuthService {
     const decoded = verifyRefreshToken(token);
 
     // 2. Atomic replay detection — attempt to blocklist first. If the jti
-    //    already exists (MongoDB unique constraint E11000), the token was
+    //    already exists, the token was
     //    already rotated by a concurrent request. Reject immediately.
     const oldExp = decoded.exp;
     const expiresAt = oldExp
@@ -146,7 +146,7 @@ export class AuthService {
     exp?: number;
   }): Promise<void> {
     // Blocklist the access token's jti so it can't be reused after logout
-    // TTL is set to the token's natural expiry — DB self-cleans after that
+    // TTL is set to the token's natural expiry
     const expiresAt = exp ? new Date(exp * 1000) : new Date(Date.now() + 15 * 60 * 1000); // fallback: 15m
 
     await TokenBlocklist.create({ jti, userId, expiresAt });

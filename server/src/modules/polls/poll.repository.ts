@@ -2,11 +2,6 @@ import { Types } from "mongoose";
 import { Poll, IPoll } from "./poll.schema.js";
 import { CreatePollInput, UpdatePollInput, PollListQuery } from "./dtos/poll.dto.js";
 
-/**
- * PollRepository — all Mongoose operations for polls.
- * Zero business logic. Zero ApiErrors. Only DB calls and data shaping.
- * If the DB layer changes, only this file needs updating.
- */
 export class PollRepository {
   /**
    * Create a new poll.
@@ -35,7 +30,7 @@ export class PollRepository {
   }
 
   /**
-   * Get a single poll by ID — no auth check here, that's the service's job.
+   * Get a single poll by ID
    */
   static async findById(pollId: string): Promise<IPoll | null> {
     if (!Types.ObjectId.isValid(pollId)) return null;
@@ -83,11 +78,7 @@ export class PollRepository {
     });
   }
 
-  /**
-   * Delete a poll by ID. This is a hard delete.
-   * The service layer handles cascading deletion of associated responses
-   * before calling this — see PollService.deletePoll().
-   */
+  // Delete a poll by ID.
   static async delete(pollId: string): Promise<boolean> {
     if (!Types.ObjectId.isValid(pollId)) return false;
     const result = await Poll.findByIdAndDelete(pollId);
@@ -124,7 +115,7 @@ export class PollRepository {
   }
 
   /**
-   * Atomically increment the denormalised response counter.
+   * Atomically increment the response counter.
    * Called by ResponseService after a successful response submission.
    * Returns the updated totalResponses count.
    */

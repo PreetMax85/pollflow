@@ -1,20 +1,7 @@
-/**
- *
- * Centralized route definitions using React Router v6 createBrowserRouter.
- *
- * Route guards:
- *  <ProtectedRoute />   — requires auth. Redirects to /auth/login if not.
- *  <PublicOnlyRoute />  — blocks authenticated users (e.g. login page).
- *                         Redirects to /dashboard if already logged in.
- *
- * Layout pattern: a shared <AppLayout /> wraps all authenticated pages,
- * providing the nav bar and consistent padding without repeating markup.
- */
-
 import { createBrowserRouter, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore, selectIsAuthenticated } from "@/store/useAuthStore";
 
-// ─── Lazy Page Imports ────────────────────────────────────────────────────────
+// Lazy Page Imports
 // Code-split every page so the initial bundle stays small.
 // Each import() becomes a separate chunk that Vite loads on demand.
 
@@ -33,7 +20,7 @@ const RespondPage = lazy(() => import("@/pages/respond/RespondPage"));
 const PollResultsPage = lazy(() => import("@/pages/polls/PollResultsPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
-// ─── Loading Fallback ─────────────────────────────────────────────────────────
+//  Loading Fallback
 
 const PageLoader = () => (
   <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -44,7 +31,7 @@ const PageLoader = () => (
   </div>
 );
 
-// ─── Route Guards ─────────────────────────────────────────────────────────────
+//  Route Guards
 
 /**
  * Wraps any route that requires the user to be logged in.
@@ -76,16 +63,12 @@ const PublicOnlyRoute = () => {
   return <Outlet />;
 };
 
-// ─── App Layout ───────────────────────────────────────────────────────────────
-// Thin wrapper — just holds the nav + page container.
-// Import the real AppLayout once you build it.
-
 const AppLayout = lazy(() => import("@/components/layout/AppLayout"));
 
-// ─── Router ───────────────────────────────────────────────────────────────────
+// Router
 
 export const router = createBrowserRouter([
-  // ── Public: auth pages ────────────────────────────────────────────────────
+  // Public: auth pages
   {
     element: (
       <Suspense fallback={<PageLoader />}>
@@ -108,7 +91,6 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ── Public: reset password (accessible from email link, no auth needed) ──
   {
     path: "/reset-password",
     element: (
@@ -118,7 +100,7 @@ export const router = createBrowserRouter([
     ),
   },
 
-  // ── Public: poll response page (no auth required — anyone can respond) ───
+  // Public: poll response page
   {
     path: "/polls/:pollId/respond",
     element: (
@@ -146,7 +128,7 @@ export const router = createBrowserRouter([
     ),
   },
 
-  // ── Protected: authenticated pages wrapped in AppLayout ──────────────────
+  // Protected: authenticated pages wrapped in AppLayout 
   {
     element: (
       <Suspense fallback={<PageLoader />}>
@@ -178,7 +160,7 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ── 404 ──────────────────────────────────────────────────────────────────
+  // 404
   {
     path: "*",
     element: (

@@ -5,18 +5,6 @@ import { ApiError } from "../../common/utils/ApiError.js";
 import { AuthRequest } from "../../common/middleware/authenticate.middleware.js";
 import { createPollSchema, updatePollSchema, pollListQuerySchema } from "./dtos/poll.dto.js";
 
-/**
- * PollController — HTTP boundary layer only.
- *
- * Responsibilities:
- * 1. Parse and validate request input (Zod)
- * 2. Extract authenticated user from req.user
- * 3. Call the service
- * 4. Return the correct HTTP response via ApiResponse
- *
- * No business logic here. No direct DB calls. No if/else for auth rules.
- * Everything that could throw an ApiError happens in the service.
- */
 export class PollController {
   /**
    * POST /api/v1/polls
@@ -54,7 +42,6 @@ export class PollController {
    * GET /api/v1/polls/:pollId
    * Get a single poll by ID.
    * Public route — optionalAuth middleware attaches user if logged in.
-   * The service enforces visibility rules based on poll status and ownership.
    */
   static async getById(req: AuthRequest, res: Response): Promise<void> {
     const pollId = req.params["pollId"] as string;

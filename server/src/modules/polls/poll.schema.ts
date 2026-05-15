@@ -1,20 +1,6 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 
-/**
- * Why embed questions and options inside the poll document?
- *
- * Questions and options have no meaning outside their poll — they are never
- * queried independently. Embedding gives us atomic reads (one DB call fetches
- * the entire poll structure), atomic writes (adding a question never orphans
- * data), and simpler aggregation pipelines for analytics.
- *
- * Responses are in a SEPARATE collection because:
- * - They are queried independently for analytics
- * - They grow unboundedly (one poll → many responses)
- * - Embedding them would blow past MongoDB's 16MB document limit
- */
-
-// ─── Option ──────────────────────────────────────────────────────────────────
+// Option
 export interface IOption {
   _id: Types.ObjectId;
   text: string;
@@ -39,7 +25,7 @@ const optionSchema = new Schema<IOption>(
   { _id: true }, // each option gets its own ObjectId — needed to track which option was chosen in a response
 );
 
-// ─── Question ─────────────────────────────────────────────────────────────────
+// Question
 export interface IQuestion {
   _id: Types.ObjectId;
   text: string;
@@ -77,7 +63,7 @@ const questionSchema = new Schema<IQuestion>(
   { _id: true },
 );
 
-// ─── Poll ─────────────────────────────────────────────────────────────────────
+// Poll
 export type PollStatus = "active" | "expired" | "published";
 
 export interface IPoll extends Document {
@@ -173,8 +159,6 @@ const pollSchema = new Schema<IPoll>(
       type: Date,
     },
 
-    // Denormalised for cheap real-time count emission.
-    // Source of truth for display — responses collection is source of truth for analytics.
     totalResponses: {
       type: Number,
       default: 0,
@@ -195,7 +179,7 @@ const pollSchema = new Schema<IPoll>(
   },
 );
 
-// ─── Indexes ──────────────────────────────────────────────────────────────────
+// Indexes 
 
 // Compound index: powers the "get my polls, sorted by newest" query
 pollSchema.index({ createdBy: 1, createdAt: -1 });
@@ -203,7 +187,7 @@ pollSchema.index({ createdBy: 1, createdAt: -1 });
 // Compound index: powers the expiry sweep — find all active polls past their expiresAt
 pollSchema.index({ status: 1, expiresAt: 1 });
 
-// ─── Pre-save middleware ──────────────────────────────────────────────────────
+// Pre-save middleware
 
 // Auto-expire: if the poll's expiresAt has passed and status is still active,
 // mark it expired before saving. This handles edge cases where the poll is

@@ -8,7 +8,6 @@
     "types": ["vite/client"],
     "skipLibCheck": true,
 
-    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
@@ -16,12 +15,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Strict mode — judge specifically scans for these */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
 
-    /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,

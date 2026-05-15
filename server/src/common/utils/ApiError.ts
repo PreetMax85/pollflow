@@ -38,7 +38,6 @@ export class ApiError extends Error {
     return new ApiError(HttpStatus.UNPROCESSABLE_ENTITY, message);
   }
 
-  // Added a 500 helper for database or server failures
   static internal(message: string = "Internal Server Error"): ApiError {
     return new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, message);
   }

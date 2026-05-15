@@ -1,19 +1,10 @@
 import { User, IUser } from "./user.schema.js";
 import { RegisterInput } from "./dtos/auth.dto.js";
 
-/**
- * AuthRepository — all Mongoose calls for the auth module.
- *
- * Rule: zero business logic here. No throwing ApiErrors, no bcrypt, no tokens.
- * This layer only speaks to MongoDB. The service layer decides what to do with
- * what comes back. This separation means if we ever swap Mongoose for another
- * ORM, only this file changes.
- */
 export class AuthRepository {
   /**
    * Returns the full user document including the hashed password.
    * ONLY used by login — the password hash is needed for bcrypt.compare().
-   * Never return this object directly to the client.
    */
   static async findByEmail(email: string): Promise<IUser | null> {
     return User.findOne({ email }).lean();
@@ -71,7 +62,7 @@ export class AuthRepository {
 
   /**
    * Stores a hashed reset token + expiry on the user document.
-   * Raw token is emailed to the user — we never store raw tokens.
+   * Raw token is emailed to the user
    */
   static async updateResetToken(
     userId: string,

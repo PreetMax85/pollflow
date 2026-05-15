@@ -6,16 +6,6 @@ import { emitPollPublished, emitPollExpired } from "../../socket/socket.js";
 import { env } from "../../common/config/env.js";
 import { CreatePollInput, UpdatePollInput, PollListQuery } from "./dtos/poll.dto.js";
 
-/**
- * PollService — all business logic for poll lifecycle management.
- *
- * Rules enforced here:
- * - Only the poll creator can edit, delete, or publish their poll
- * - A poll with responses cannot have its questions modified
- * - Only expired polls (or active polls past their expiresAt) can be published
- * - A poll can only be published once
- * - Expiry date must always be in the future when updating
- */
 export class PollService {
   /**
    * Create a new poll owned by the authenticated user.
@@ -103,9 +93,7 @@ export class PollService {
 
   /**
    * Delete a poll and all associated data.
-   * Only the creator can delete. Deletion cascades to responses via the
-   * ResponseRepository (called from here to keep the service responsible
-   * for cross-module coordination).
+   * Only the creator can delete. Deletion cascades to responses via the ResponseRepository.
    */
   static async deletePoll(pollId: string, userId: string): Promise<void> {
     const poll = await PollRepository.findById(pollId);
@@ -244,11 +232,6 @@ export class PollService {
     return count;
   }
 
-  /**
-   * Middleware-style check: is this poll currently accepting responses?
-   * Used by ResponseService before saving a response.
-   * Throws a descriptive ApiError if not.
-   */
   static async assertPollAcceptsResponses(pollId: string): Promise<IPoll> {
     const poll = await PollRepository.findById(pollId);
 
@@ -256,7 +239,7 @@ export class PollService {
 
     // Lazy expiry: check at request time in case the cron hasn't run yet
     if (poll.status === "active" && poll.expiresAt <= new Date()) {
-      // Trigger async expiry update — don't await, don't block the response
+      // Trigger async expiry update
       PollRepository.expireOverduePolls().catch((e) =>
         console.error("[PollService] Expiry sweep failed:", e),
       );

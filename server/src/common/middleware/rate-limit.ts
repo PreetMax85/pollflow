@@ -2,9 +2,7 @@ import rateLimit from "express-rate-limit";
 
 /**
  * Applied to: POST /api/v1/auth/login
- *
  * Tight limit — 10 attempts per 15 minutes per IP.
- * Brute-forcing a password requires >10 attempts. This stops it cold.
  * Rate limiting prevents brute-force attacks on login.
  */
 export const loginLimiter = rateLimit({
@@ -20,7 +18,6 @@ export const loginLimiter = rateLimit({
 
 /**
  * Applied to: POST /api/v1/auth/register
- *
  * Prevents mass account creation from a single IP.
  */
 export const registerLimiter = rateLimit({
@@ -37,8 +34,6 @@ export const registerLimiter = rateLimit({
 /**
  * Applied to: POST /api/v1/auth/forgot-password
  *             POST /api/v1/auth/reset-password
- *
- * Password reset endpoints are a common attack surface for account takeover.
  * Rate limiting on reset endpoints prevents token brute-forcing.
  */
 export const passwordResetLimiter = rateLimit({
@@ -54,7 +49,6 @@ export const passwordResetLimiter = rateLimit({
 
 /**
  * Applied to: POST /api/v1/polls/:pollId/respond
- *
  * Prevents a single IP from spamming anonymous responses to a poll.
  * Authenticated users are additionally deduplicated at the DB level.
  */
@@ -71,7 +65,7 @@ export const responseLimiter = rateLimit({
 
 export const refreshLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30, // generous — silent refresh happens on every app load
+  max: 30,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   message: { success: false, error: "Too many refresh attempts." },

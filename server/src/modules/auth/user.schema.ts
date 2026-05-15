@@ -1,13 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-/**
- * IUser — the TypeScript interface for a User document.
- *
- * Using _id as string is intentional — Mongoose ObjectIds serialize to strings
- * in JSON responses, and our JWT payload uses userId: string. Keeping the type
- * consistent throughout prevents subtle bugs where a number comparison fails
- * against a string ObjectId.
- */
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   name: string;
@@ -15,7 +7,6 @@ export interface IUser extends Document {
   password: string;
 
   // Password reset fields — undefined when no reset is in progress.
-  // Using undefined (not null) to match exactOptionalPropertyTypes in tsconfig.
   resetToken?: string;
   resetTokenExpiresAt?: Date;
 
@@ -36,7 +27,7 @@ const userSchema = new Schema<IUser>(
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: true, // creates a unique index — duplicate email → MongoServerError code 11000
+      unique: true, // creates a unique index
       lowercase: true, // always stored lowercase; normalized at the DB layer
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
@@ -52,8 +43,7 @@ const userSchema = new Schema<IUser>(
     },
 
     // Reset token fields — sparse index means the index only tracks documents
-    // where the field exists. This is efficient since most users won't have
-    // a reset token at any given time.
+    // where the field exists.
     resetToken: {
       type: String,
       sparse: true,
@@ -69,7 +59,7 @@ const userSchema = new Schema<IUser>(
     timestamps: true, // auto-manages createdAt + updatedAt
 
     // Transform output to remove sensitive fields and rename _id to id
-    // whenever .toJSON() is called (which res.json() does automatically).
+    // whenever .toJSON() is called.
     toJSON: {
       virtuals: true,
       transform(_doc, ret: Record<string, unknown>) {
@@ -84,12 +74,5 @@ const userSchema = new Schema<IUser>(
     },
   },
 );
-
-/**
- * Index strategy:
- * - email: unique index (declared via unique: true above) — O(1) login lookups
- * - resetToken: sparse index (declared above) — O(1) reset token lookups
- * - No compound indexes needed for auth — queries are always by single field
- */
 
 export const User = mongoose.model<IUser>("User", userSchema);

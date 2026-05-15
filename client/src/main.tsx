@@ -1,8 +1,3 @@
-/**
- * Boot sequence: bootstrapAuth → render.
- * ErrorBoundary catches lazy-import failures (cold Vite server, network blip).
- */
-
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -14,7 +9,7 @@ import { router } from "@/router";
 import { bootstrapAuth } from "@/lib/bootstrapAuth";
 import "./index.css";
 
-// ─── Query Client ─────────────────────────────────────────────────────────────
+// Query Client 
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,9 +25,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// ─── Error Fallback ───────────────────────────────────────────────────────────
-// Catches lazy-import failures (cold dev server, Vercel deploy race).
-
+// Error Fallback
 function AppErrorFallback() {
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-3 text-center px-4">
@@ -47,7 +40,7 @@ function AppErrorFallback() {
   );
 }
 
-// ─── Root ─────────────────────────────────────────────────────────────────────
+// Root 
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("[main] #root element not found");

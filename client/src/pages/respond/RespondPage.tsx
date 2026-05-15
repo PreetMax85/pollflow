@@ -27,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
 
-// ✅ types from @/types, api calls from @/api/polls
+// types from @/types, api calls from @/api/polls
 import { pollsApi } from "@/api/polls";
 import type { Poll, PollQuestion } from "@/types";
 import { submitResponse } from "@/api/responses";
@@ -40,7 +40,6 @@ type FormValues = Record<string, string>;
 const buildFormSchema = (questions: PollQuestion[]): z.ZodObject<Record<string, z.ZodTypeAny>> => {
   const shape: Record<string, z.ZodTypeAny> = {};
   for (const q of questions) {
-    // Use _id — backend subdocuments don't have toJSON transform, keep _id
     shape[q._id] = q.isRequired
       ? z.string().min(1, `"${q.text}" is required`)
       : z.string().optional().default("");
@@ -194,7 +193,7 @@ export default function RespondPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isExpiredBySocket, setIsExpiredBySocket] = useState(false);
 
-  // ✅ unwrap ApiResponse envelope → data.poll is the Poll object
+  // unwrap ApiResponse envelope → data.poll is the Poll object
   const {
     data: poll,
     isLoading,

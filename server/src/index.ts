@@ -12,26 +12,21 @@ import { errorHandler } from "./common/middleware/error.middleware.js";
 import { ApiResponse } from "./common/utils/ApiResponse.js";
 import { initSocket, getIO } from "./socket/socket.js";
 
-// ─── Route Imports ────────────────────────────────────────────────────────────
-// These will exist once each module is built. Importing here so index.ts is
-// correct from day one — TS will error if a module is missing, keeping us honest.
+// Route Imports
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { pollRoutes } from "./modules/polls/poll.routes.js";
 import { responseRoutes } from "./modules/responses/response.routes.js";
 import { analyticsRoutes } from "./modules/analytics/analytics.routes.js";
 
-// ─── App + HTTP Server ────────────────────────────────────────────────────────
-// We create an HTTP server manually instead of using app.listen() because
-// Socket.io needs to attach to the raw HTTP server, not the Express instance.
+// App + HTTP Server
 const app: Application = express();
 const httpServer = createServer(app);
 
-// Initialize Socket.io on the HTTP server (not the Express app)
+// Initialize Socket.io on the HTTP server
 initSocket(httpServer);
 
-// ─── Rate Limiting ────────────────────────────────────────────────────────────
-// Global limiter: generous — protects against scraping/DoS without blocking
-// legitimate traffic. Auth routes have their own tighter limiter in auth.routes.ts
+// Rate Limiting 
+// Global limiter: protects against scraping/DoS without blocking legitimate traffic.
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 300,
@@ -41,14 +36,14 @@ const globalLimiter = rateLimit({
     success: false,
     error: "Too many requests from this IP, please try again after 15 minutes.",
   },
-  skip: (req: Request) => req.path === "/health", // never rate-limit health checks
+  skip: (req: Request) => req.path === "/health",
 });
 
-// ─── Core Middleware ──────────────────────────────────────────────────────────
+// Core Middleware
 app.use(
   cors({
     origin: env.CLIENT_URL,
-    credentials: true, // required for httpOnly refresh cookie
+    credentials: true, 
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
@@ -72,8 +67,8 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // Cookie parser — needed to read the httpOnly refresh token cookie
 app.use(cookieParser());
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
-// Returns real system state — actual DB connection status from mongoose.
+// Health Check ─
+// Returns real system state
 app.get("/health", (_req: Request, res: Response) => {
   const dbStateMap: Record<number, string> = {
     0: "disconnected",
@@ -93,16 +88,14 @@ app.get("/health", (_req: Request, res: Response) => {
   });
 });
 
-// ─── API Routes ───────────────────────────────────────────────────────────────
-// All routes are versioned under /api/v1 for production-grade API design.
-// All future breaking changes can use /api/v2 without affecting existing clients.
+// API Routes 
+// All routes are versioned under /api/v1
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/polls", pollRoutes);
 app.use("/api/v1/polls", responseRoutes); // mounted on /polls because responses are nested: /polls/:pollId/respond
 app.use("/api/v1/analytics", analyticsRoutes);
 
-// ─── 404 Handler ──────────────────────────────────────────────────────────────
-// Must come AFTER all routes but BEFORE the error handler.
+// 404 Handler
 // Catches any request that didn't match a defined route.
 app.use((_req: Request, res: Response) => {
   res.status(404).json({
@@ -111,15 +104,13 @@ app.use((_req: Request, res: Response) => {
   });
 });
 
-// ─── Global Error Handler ─────────────────────────────────────────────────────
-// MUST be the absolute last middleware registered — Express identifies error
-// handlers by their 4-argument signature (err, req, res, next).
+// Global Error Handler
 // Catches everything: Zod errors, ApiErrors, Mongoose errors, unhandled throws.
 app.use((err: unknown, req: Request, res: Response, next: NextFunction): void => {
   errorHandler(err, req, res, next);
 });
 
-// ─── Bootstrap ────────────────────────────────────────────────────────────────
+// Bootstrap
 // We connect to DB before starting the HTTP server. If DB connection fails,
 // the process exits immediately — we never start accepting traffic with no DB.
 const startServer = async (): Promise<void> => {
@@ -141,13 +132,12 @@ const startServer = async (): Promise<void> => {
 
 startServer();
 
-// ─── Unhandled Rejection Handler ───────────────────────────────────────────────
-// Node 15+ crashes on unhandled promise rejections without this handler.
+// Unhandled Rejection Handler
 process.on("unhandledRejection", (reason, promise) => {
   console.error("[Server] Unhandled Rejection at:", promise, "reason:", reason);
 });
 
-// ─── Graceful Shutdown ─────────────────────────────────────────────────────────
+// Graceful Shutdown
 // Close HTTP server, Socket.io, and MongoDB in order on SIGTERM/SIGINT.
 // Ensures clean shutdown — HTTP server, Socket.io, and MongoDB close in order.
 const shutdown = async (signal: string): Promise<void> => {

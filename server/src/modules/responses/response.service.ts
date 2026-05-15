@@ -8,22 +8,7 @@ import { emitResponseCount, emitAnalyticsUpdate } from "../../socket/socket.js";
 import { SubmitResponseInput } from "./dtos/response.dto.js";
 
 export class ResponseService {
-  /**
-   * Submit a response to a poll.
-   *
-   * This is the most logic-heavy method in the entire codebase.
-   * It enforces every constraint the spec requires, in order:
-   *
-   * 1. Poll must be active and not expired (delegates to PollService)
-   * 2. Auth requirement: if poll.requiresAuth and no userId → reject
-   * 3. Duplicate prevention: if authenticated, check prior response
-   * 4. Structural validation: submitted questionIds must exist in poll
-   * 5. Mandatory question validation: all required questions must be answered
-   * 6. Option validation: each optionId must belong to its question
-   * 7. Save response
-   * 8. Increment poll.totalResponses atomically
-   * 9. Emit real-time socket events (count + analytics snapshot)
-   */
+
   static async submitResponse(params: {
     pollId: string;
     answers: SubmitResponseInput["answers"];
@@ -33,10 +18,10 @@ export class ResponseService {
   }): Promise<{ message: string; responseId: string }> {
     const { pollId, answers, userId, ipAddress, ipHash } = params;
 
-    // ── Step 1: Poll must accept responses ───────────────────────────────────
+    // Step 1: Poll must accept responses
     const poll = await PollService.assertPollAcceptsResponses(pollId);
 
-    // ── Step 2: Auth requirement check ───────────────────────────────────────
+    // Step 2: Auth requirement check
     // If the poll creator set requiresAuth: true, anonymous guests are rejected.
     // This check happens BEFORE duplicate detection so error messages don't
     // leak information about whether anonymous users have responded.
@@ -44,8 +29,8 @@ export class ResponseService {
       throw ApiError.unauthorized("This poll requires you to be logged in to submit a response");
     }
 
-    // ── Step 3: Duplicate response prevention ────────────────────────────────
-    // Dual-layer approach matching the cheatsheet's recommended pattern:
+    // Step 3: Duplicate response prevention 
+    // Dual-layer approach:
     // Layer 1 (app): check before save — returns clear error messages
     // Layer 2 (DB): unique sparse indexes — safety net if app logic fails
     //
@@ -65,10 +50,10 @@ export class ResponseService {
       }
     }
 
-    // ── Steps 4, 5, 6: Validate answers against poll structure ───────────────
+    // Steps 4, 5, 6: Validate answers against poll structure
     ResponseService.validateAnswers(poll, answers);
 
-    // ── Step 7: Save response ────────────────────────────────────────────────
+    // Step 7: Save response
     const saved = await ResponseRepository.create({
       pollId,
       answers,
@@ -78,10 +63,10 @@ export class ResponseService {
       ...(ipHash !== undefined && { ipHash }),
     });
 
-    // ── Step 8: Increment denormalised counter atomically ────────────────────
+    // Step 8: Increment denormalised counter atomically 
     const totalResponses = await PollRepository.incrementResponseCount(pollId);
 
-    // ── Step 9: Real-time socket emissions ───────────────────────────────────
+    // Step 9: Real-time socket emissions 
     // Emit count immediately — cheap, always happens
     emitResponseCount(pollId, totalResponses);
 
@@ -109,7 +94,6 @@ export class ResponseService {
    */
   private static validateAnswers(poll: IPoll, answers: SubmitResponseInput["answers"]): void {
     // Build lookup maps from the poll's embedded data
-    // Map<questionId, Set<optionId>>
     const questionOptionMap = new Map<string, Set<string>>();
     const requiredQuestionIds = new Set<string>();
 
@@ -122,18 +106,16 @@ export class ResponseService {
       }
     }
 
-    // Map of submitted answers: questionId → optionId
+    // Map of submitted answers
     const submittedMap = new Map<string, string>();
 
     for (const answer of answers) {
       const { questionId, optionId } = answer;
 
-      // Validation 1: questionId must exist in this poll
       if (!questionOptionMap.has(questionId)) {
         throw ApiError.badRequest(`Question "${questionId}" does not belong to this poll`);
       }
 
-      // Validation 3: optionId must belong to this question
       const validOptions = questionOptionMap.get(questionId)!;
       if (!validOptions.has(optionId)) {
         throw ApiError.badRequest(
@@ -151,7 +133,6 @@ export class ResponseService {
       submittedMap.set(questionId, optionId);
     }
 
-    // Validation 2: all required questions must have been answered
     const missingRequired: string[] = [];
     for (const requiredId of requiredQuestionIds) {
       if (!submittedMap.has(requiredId)) {
@@ -168,16 +149,11 @@ export class ResponseService {
     }
   }
 
-  /**
-   * Compute and emit the current analytics snapshot via Socket.io.
-   * Called async after a response is saved — failure is non-critical.
-   */
   private static async emitAnalyticsSnapshot(pollId: string): Promise<void> {
     try {
       const snapshot = await AnalyticsService.getAnalyticsSnapshot(pollId);
       emitAnalyticsUpdate(pollId, snapshot);
     } catch (err) {
-      // Log but never crash — a failed socket emit must not affect response submission
       console.error("[ResponseService] Failed to emit analytics snapshot:", err);
     }
   }

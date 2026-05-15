@@ -1,7 +1,3 @@
-/**
- * @file src/pages/polls/EditPollPage.tsx
- */
-
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useForm, useFieldArray, useFormContext } from "react-hook-form";
 import type { Control, ControllerRenderProps } from "react-hook-form";
@@ -32,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { pollsApi } from "@/api/polls";
 import type { Poll, ApiResponse } from "@/types";
 
-// ─── ToggleSwitch ─────────────────────────────────────────────────────────────
+// ToggleSwitch 
 
 function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -58,7 +54,7 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
   );
 }
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
+// Schema 
 
 const optionSchema = z.object({
   text: z.string().min(1, "Option cannot be empty").max(300),
@@ -84,7 +80,7 @@ const editPollSchema = z.object({
 
 type EditPollFormValues = z.infer<typeof editPollSchema>;
 
-// ─── Question Item ────────────────────────────────────────────────────────────
+// Question Item
 
 interface QuestionItemProps {
   questionIndex: number;
@@ -228,7 +224,7 @@ function QuestionItem({ questionIndex, control, onRemove, canRemove }: QuestionI
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// Page
 
 export default function EditPollPage() {
   const { pollId } = useParams<{ pollId: string }>();

@@ -4,16 +4,6 @@ import { Poll } from "../polls/poll.schema.js";
 import { ApiError } from "../../common/utils/ApiError.js";
 import type { AnalyticsSnapshot, QuestionAnalytics } from "../../socket/socket.js";
 
-/**
- * AnalyticsService — all analytics computed inside MongoDB.
- *
- * Why aggregation pipeline and not Node.js math?
- * - MongoDB processes data where it lives — no network transfer of raw documents
- * - $group and $facet are O(n) inside the engine, not O(n) across the wire
- * - Percentages calculated in the pipeline avoid loading raw documents into memory.
- * - With 10,000 responses, Node.js math requires loading 10,000 documents.
- *   The pipeline returns ~10 grouped rows regardless of response count.
- */
 export class AnalyticsService {
   /**
    * Full analytics for a poll's dashboard.
@@ -36,7 +26,7 @@ export class AnalyticsService {
    *    into the aggregation result. Totals come from the pipeline, not from JS reduce.
    */
   static async getFullAnalytics(pollId: string, requestingUserId: string): Promise<FullAnalytics> {
-    // ── Auth check: only the poll creator can see full analytics ──────────────
+    // Auth check: only the poll creator can see full analytics
     const poll = await Poll.findById(pollId).lean({ virtuals: true });
     if (!poll) throw ApiError.notFound("Poll not found");
 
@@ -44,7 +34,7 @@ export class AnalyticsService {
       throw ApiError.forbidden("Only the poll creator can view analytics");
     }
 
-    // ── Aggregation pipeline ───────────────────────────────────────────────────
+    // Aggregation pipeline
     const pipeline: PipelineStage[] = [
       // Stage 1: filter to this poll's responses only
       {
@@ -56,10 +46,10 @@ export class AnalyticsService {
       // Stage 2: $facet runs all sub-pipelines on the same matched set in parallel
       {
         $facet: {
-          // ── 2a: total response count ────────────────────────────────────────
+          // 2a: total response count
           totalCount: [{ $count: "count" }],
 
-          // ── 2b: per-option answer breakdown ─────────────────────────────────
+          // 2b: per-option answer breakdown
           // $unwind explodes the answers array so each answer becomes its own doc.
           // Then we group by (questionId, optionId) and count occurrences.
           // This gives us exactly: "question X, option Y was chosen Z times"
@@ -85,7 +75,7 @@ export class AnalyticsService {
             { $sort: { questionId: 1, count: -1 } },
           ],
 
-          // ── 2c: per-question answer totals (no JS reduce) ────────────────────
+          // 2c: per-question answer totals
           questionTotals: [
             { $unwind: "$answers" },
             {
@@ -103,7 +93,7 @@ export class AnalyticsService {
             },
           ],
 
-          // ── 2d: daily response timeline ──────────────────────────────────────
+          // 2d: daily response timeline
           // Groups responses by calendar day for the participation trend chart.
           // $dateToString truncates the timestamp to YYYY-MM-DD.
           dailyTimeline: [
@@ -129,7 +119,7 @@ export class AnalyticsService {
             { $sort: { date: 1 } },
           ],
 
-          // ── 2e: anonymous vs identified breakdown ────────────────────────────
+          // 2e: anonymous vs identified breakdown
           anonymousBreakdown: [
             {
               $group: {
@@ -140,7 +130,7 @@ export class AnalyticsService {
           ],
         },
       },
-      // Stage 3: compute percentages inside MongoDB — no JS math
+      // Stage 3: compute percentages inside MongoDB
       {
         $addFields: {
           answerBreakdown: {
@@ -184,19 +174,17 @@ export class AnalyticsService {
 
     const [result] = await Response.aggregate(pipeline);
 
-    // $facet always returns arrays — safely extract with fallbacks
     const totalResponses: number = result?.totalCount?.[0]?.count ?? 0;
     const answerBreakdown: AnswerBreakdownRow[] = result?.answerBreakdown ?? [];
     const questionTotals: QuestionTotalRow[] = result?.questionTotals ?? [];
     const dailyTimeline: TimelineRow[] = result?.dailyTimeline ?? [];
     const anonymousBreakdown: AnonymousRow[] = result?.anonymousBreakdown ?? [];
 
-    // Build a lookup: questionId → totalAnswers (from pipeline, not JS reduce)
     const questionTotalMap = new Map(
       questionTotals.map((qt) => [qt.questionId.toString(), qt.totalAnswers]),
     );
 
-    // ── Merge question/option text from poll document ─────────────────────────
+    // Merge question/option text from poll document
     // The pipeline gives us counts by ObjectId — we attach human-readable text
     // from the poll's embedded docs. Total answers per question come from the
     // pipeline's questionTotals facet, not from a JS reduce.
@@ -206,13 +194,12 @@ export class AnalyticsService {
       questionTotalMap,
     );
 
-    // ── Compute anonymous count from breakdown ────────────────────────────────
+    // Compute anonymous count from breakdown
     const anonymousCount = anonymousBreakdown.find((b) => b._id === true)?.count ?? 0;
     const identifiedCount = anonymousBreakdown.find((b) => b._id === false)?.count ?? 0;
 
-    // ── Completion rate (required questions only) ─────────────────────────────
-    // Total answers per question come from the pipeline — only the final ratio
-    // is computed here using pre-aggregated values.
+    // Completion rate (required questions only) 
+    // Total answers per question come from the pipeline — only the final ratio is computed here using pre-aggregated values.
     const requiredQuestions = questions.filter((q) => q.isRequired);
     const completionRate = (() => {
       if (totalResponses === 0 || requiredQuestions.length === 0) return 100;
@@ -551,7 +538,7 @@ export class AnalyticsService {
   }
 }
 
-// ─── Internal Types ────────────────────────────────────────────────────────────
+// ─ Internal Types 
 // These are the shapes returned by the aggregation pipeline stages.
 // Kept private to this file — external consumers use the exported return types.
 
@@ -590,7 +577,7 @@ interface IPollQuestion {
   }[];
 }
 
-// ─── Exported Return Types ────────────────────────────────────────────────────
+// Exported Return Types 
 
 export interface FullAnalytics {
   pollId: string;

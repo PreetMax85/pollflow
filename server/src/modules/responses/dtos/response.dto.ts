@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-// ─── Submit Response ───────────────────────────────────────────────────────────
+// Submit Response
 
 const answerSchema = z.object({
-  // We receive these as strings from the client (JSON doesn't have ObjectId)
+  // We receive these as strings from the client
   // and validate they look like valid MongoDB ObjectIds before touching the DB.
   questionId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid question ID format"),
 

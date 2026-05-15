@@ -1,7 +1,7 @@
 import { apiClient } from "@/api/axios";
 import type { ApiResponse } from "@/types";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types 
 
 export interface Answer {
   questionId: string;
@@ -12,7 +12,7 @@ export interface SubmitResponseInput {
   answers: Answer[];
 }
 
-// ─── API ──────────────────────────────────────────────────────────────────────
+// API
 
 export const responsesApi = {
   /** POST /api/v1/polls/:pollId/respond */

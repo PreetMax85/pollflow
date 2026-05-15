@@ -1,7 +1,3 @@
-/**
- * @file src/pages/auth/RegisterPage.tsx
- */
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,7 +28,7 @@ import {
 import { useAuthStore } from "@/store/useAuthStore";
 import { authApi } from "@/api/auth";
 
-// ─── Validation Schema ────────────────────────────────────────────────────────
+// Validation Schema 
 // Mirrors the backend registerSchema exactly — same regex, same messages.
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
@@ -55,7 +51,7 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);

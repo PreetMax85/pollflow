@@ -31,7 +31,7 @@ export const errorHandler = (
     return;
   }
 
-  // 3. MongoDB duplicate key (email already registered, duplicate vote, etc.)
+  // 3. MongoDB duplicate key
   if (err instanceof MongoServerError && err.code === 11000) {
     const isDuplicateResponse =
       err.message?.includes("unique_authenticated_response") ||
@@ -45,7 +45,7 @@ export const errorHandler = (
     return;
   }
 
-  // 4. Mongoose validation error (schema-level, catches required fields etc.)
+  // 4. Mongoose validation error
   if (err instanceof MongooseError.ValidationError) {
     const message = Object.values(err.errors)
       .map((e) => e.message)
@@ -54,7 +54,7 @@ export const errorHandler = (
     return;
   }
 
-  // 5. Mongoose CastError (invalid ObjectId in URL params)
+  // 5. Mongoose CastError
   if (err instanceof MongooseError.CastError) {
     res.status(400).json({ success: false, error: `Invalid ${err.path} format` });
     return;

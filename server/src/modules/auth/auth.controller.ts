@@ -13,7 +13,7 @@ import {
   resetPasswordSchema,
 } from "./dtos/auth.dto.js";
 
-// ─── Cookie Helper ────────────────────────────────────────────────────────────
+// Cookie Helper
 const setRefreshCookie = (res: Response, token: string): void => {
   res.cookie("refreshToken", token, {
     httpOnly: true,
@@ -23,9 +23,8 @@ const setRefreshCookie = (res: Response, token: string): void => {
   });
 };
 
-// ─── Controller ───────────────────────────────────────────────────────────────
-// No try/catch anywhere — asyncHandler in the routes layer catches all throws
-// and forwards them to the global error handler. Clean, no duplication.
+// Controller
+// asyncHandler in the routes layer catches all throws and forwards them to the global error handler.
 
 export class AuthController {
   static async register(req: Request, res: Response): Promise<void> {
@@ -105,7 +104,7 @@ export class AuthController {
     ApiResponse.ok(res, result.message);
   }
 
-  // ── /auth/me ────────────────────────────────────────────────────────────────
+  // ── /auth/me ────
   // Returns the currently authenticated user's profile.
   // Used by bootstrapAuth on every page load to repopulate Zustand after refresh.
   static async me(req: AuthRequest, res: Response): Promise<void> {

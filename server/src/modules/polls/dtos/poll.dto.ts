@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// ─── Option ───────────────────────────────────────────────────────────────────
+// Option
 
 const optionSchema = z.object({
   text: z
@@ -10,7 +10,7 @@ const optionSchema = z.object({
     .max(300, "Option text must be at most 300 characters"),
 });
 
-// ─── Question ─────────────────────────────────────────────────────────────────
+//  Question
 
 const questionSchema = z.object({
   text: z
@@ -27,7 +27,7 @@ const questionSchema = z.object({
     .max(10, "A question can have at most 10 options"),
 });
 
-// ─── Create Poll ──────────────────────────────────────────────────────────────
+//  Create Poll 
 
 export const createPollSchema = z.object({
   title: z
@@ -51,17 +51,14 @@ export const createPollSchema = z.object({
 
   isAnonymous: z.boolean().default(false),
 
-  // expiresAt: must be a future ISO date string, coerced to Date
   expiresAt: z
     .string()
-    .datetime({ message: "expiresAt must be a valid ISO 8601 datetime string" })
-    .refine((val) => new Date(val) > new Date(), {
-      message: "Expiry date must be in the future",
-    })
+    .refine((val) => !isNaN(Date.parse(val)), "expiresAt must be a valid ISO 8601 datetime string")
+    .refine((val) => new Date(val) > new Date(), "Expiry date must be in the future")
     .transform((val) => new Date(val)),
 });
 
-// ─── Update Poll ──────────────────────────────────────────────────────────────
+//  Update Poll ──
 // Only title, description, and expiresAt can be updated after creation.
 // Questions cannot be edited once the poll has responses — this prevents
 // invalidating existing response data. The service enforces this rule.
@@ -82,15 +79,13 @@ export const updatePollSchema = z.object({
 
   expiresAt: z
     .string()
-    .datetime({ message: "expiresAt must be a valid ISO 8601 datetime string" })
-    .refine((val) => new Date(val) > new Date(), {
-      message: "New expiry date must be in the future",
-    })
+    .refine((val) => !isNaN(Date.parse(val)), "expiresAt must be a valid ISO 8601 datetime string")
+    .refine((val) => new Date(val) > new Date(), "New expiry date must be in the future")
     .transform((val) => new Date(val))
     .optional(),
 });
 
-// ─── Poll List Query ──────────────────────────────────────────────────────────
+//  Poll List Query
 
 export const pollListQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -98,7 +93,7 @@ export const pollListQuerySchema = z.object({
   status: z.enum(["active", "expired", "published"]).optional(),
 });
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+//  Types
 
 export type CreatePollInput = z.infer<typeof createPollSchema>;
 export type UpdatePollInput = z.infer<typeof updatePollSchema>;
