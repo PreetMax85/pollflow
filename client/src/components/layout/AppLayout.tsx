@@ -7,6 +7,7 @@
 
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { LayoutDashboard, PlusCircle, LogOut, BarChart3, Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -52,6 +53,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const queryClient = useQueryClient();
 
   //  Logout
   const handleLogout = async () => {
@@ -60,6 +62,7 @@ export default function AppLayout() {
     } catch {
       // Local logout proceeds even if server call fails
     } finally {
+      queryClient.clear();
       clearAuth();
       toast.success("Logged out successfully");
       navigate("/auth/login", { replace: true });
