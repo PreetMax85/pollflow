@@ -140,10 +140,10 @@ const IdentityBanner = ({ poll, pollId }: IdentityBannerProps) => {
 
   if (poll.isAnonymous) {
     return (
-      <div className="mb-6 flex items-start gap-3 rounded-lg border border-teal-200 bg-teal-50/50 p-3.5">
-        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+      <div className="mb-6 flex items-start gap-3 rounded-lg border border-teal-200 bg-teal-50/50 p-3.5 dark:border-teal-800 dark:bg-teal-950/50">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" />
         <div>
-          <p className="text-sm font-medium text-teal-700">Anonymous poll</p>
+          <p className="text-sm font-medium text-teal-700 dark:text-teal-300">Anonymous poll</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Your identity will not be stored or shown in the results, regardless of whether
             you&apos;re signed in.
