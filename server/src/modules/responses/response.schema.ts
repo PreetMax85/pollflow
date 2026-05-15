@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 
 
-export interface IAnswer {
+interface IAnswer {
   questionId: Types.ObjectId;
   optionId: Types.ObjectId;
 }

@@ -34,6 +34,7 @@ import { submitResponse } from "@/api/responses";
 import { useAuthStore, selectIsAuthenticated, selectUser } from "@/store/useAuthStore";
 import { useSocket } from "@/hooks/useSocket";
 import { useCountdown } from "@/hooks/useCountdown";
+import { getApiErrorMessage } from "@/lib/utils";
 
 type FormValues = Record<string, string>;
 
@@ -283,11 +284,11 @@ export default function RespondPage() {
       setIsSubmitted(true);
       toast.success("Response submitted!");
     },
-    onError: (err: { response?: { data?: { error?: string }; status?: number } }) => {
-      const status = err.response?.status;
+    onError: (err: unknown) => {
+      const status = (err as { response?: { status?: number } }).response?.status;
       if (status === 409) toast.error("You have already responded to this poll.");
       else if (status === 401) toast.error("You need to be logged in to respond.");
-      else toast.error(err.response?.data?.error ?? "Failed to submit response.");
+      else toast.error(getApiErrorMessage(err, "Failed to submit response."));
     },
   });
 
@@ -351,7 +352,7 @@ export default function RespondPage() {
   if (isSubmitted)
     return (
       <StatusScreen
-        icon={<CheckCircle2 className="h-7 w-7 text-green-500" />}
+        icon={<CheckCircle2 className="h-7 w-7 text-green-500 dark:text-green-400" />}
         title="Response submitted!"
         description="Thank you for your feedback."
         action={

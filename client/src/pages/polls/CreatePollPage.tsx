@@ -33,7 +33,7 @@ import {
 import type { ControllerRenderProps } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 
-import { cn } from "@/lib/utils";
+import { cn, getApiErrorMessage } from "@/lib/utils";
 import { pollsApi } from "@/api/polls";
 
 // ToggleSwitch
@@ -341,11 +341,9 @@ export default function CreatePollPage() {
       const pollId = response.data.id ?? response.data._id ?? "";
       navigate(`/polls/${pollId}/analytics`);
     } catch (err) {
-      const error = err as { response?: { status?: number; data?: { error?: string } } };
-      const status = error.response?.status;
+      const status = (err as { response?: { status?: number } }).response?.status;
       if (status === 401) { navigate("/auth/login", { replace: true }); return; }
-      const message = error.response?.data?.error ?? "Failed to create poll. Please try again.";
-      toast.error(message);
+      toast.error(getApiErrorMessage(err, "Failed to create poll. Please try again."));
     }
   };
 

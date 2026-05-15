@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface ITokenBlocklist extends Document {
+interface ITokenBlocklist extends Document {
   jti: string;
   userId: string;
   expiresAt: Date;

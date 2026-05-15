@@ -44,7 +44,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 }));
 
 /** Returns the raw access token string (for the Axios interceptor). */
-export const selectAccessToken = (s: AuthState & AuthActions) => s.accessToken;
 
 /** Returns the current user object. */
 export const selectUser = (s: AuthState & AuthActions) => s.user;

@@ -19,7 +19,7 @@ export const submitResponseSchema = z.object({
         const ids = answers.map((a) => a.questionId);
         return new Set(ids).size === ids.length;
       },
-      { message: "Duplicate answers for the same question are not allowed" },
+      "Duplicate answers for the same question are not allowed",
     ),
 });
 

@@ -12,9 +12,10 @@ const envSchema = z.object({
   MONGODB_URI: z
     .string()
     .min(1, "MONGODB_URI is required")
-    .refine((uri) => uri.startsWith("mongodb://") || uri.startsWith("mongodb+srv://"), {
-      message: "MONGODB_URI must be a valid MongoDB connection string",
-    }),
+    .refine(
+      (uri) => uri.startsWith("mongodb://") || uri.startsWith("mongodb+srv://"),
+      "MONGODB_URI must be a valid MongoDB connection string",
+    ),
   JWT_ACCESS_SECRET: z.string().min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
   JWT_REFRESH_SECRET: z.string().min(32, "JWT_REFRESH_SECRET must be at least 32 characters"),
   JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),

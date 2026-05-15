@@ -33,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { pollsApi } from "@/api/polls";
 import { selectUser, useAuthStore } from "@/store/useAuthStore";
 import type { Poll, PollStatus } from "@/types";
+import { getApiErrorMessage } from "@/lib/utils";
 
 const getPollId = (poll: Poll): string => poll.id ?? poll._id ?? "";
 
@@ -265,8 +266,8 @@ export default function DashboardPage() {
       toast.success("Poll deleted");
       setPollToDelete(null);
     },
-    onError: (err: { response?: { data?: { error?: string } } }) =>
-      toast.error(err.response?.data?.error ?? "Failed to delete poll"),
+    onError: (err: unknown) =>
+      toast.error(getApiErrorMessage(err, "Failed to delete poll")),
   });
 
   const closeMutation = useMutation({
@@ -275,8 +276,8 @@ export default function DashboardPage() {
       void queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Poll closed");
     },
-    onError: (err: { response?: { data?: { error?: string } } }) =>
-      toast.error(err.response?.data?.error ?? "Failed to close poll"),
+    onError: (err: unknown) =>
+      toast.error(getApiErrorMessage(err, "Failed to close poll")),
   });
 
   const publishMutation = useMutation({
@@ -285,8 +286,8 @@ export default function DashboardPage() {
       void queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Results published!");
     },
-    onError: (err: { response?: { data?: { error?: string } } }) =>
-      toast.error(err.response?.data?.error ?? "Failed to publish results"),
+    onError: (err: unknown) =>
+      toast.error(getApiErrorMessage(err, "Failed to publish results")),
   });
 
   const duplicateMutation = useMutation({
@@ -295,8 +296,8 @@ export default function DashboardPage() {
       void queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Poll duplicated");
     },
-    onError: (err: { response?: { data?: { error?: string } } }) =>
-      toast.error(err.response?.data?.error ?? "Failed to duplicate poll"),
+    onError: (err: unknown) =>
+      toast.error(getApiErrorMessage(err, "Failed to duplicate poll")),
   });
 
   // Defensive: handle both { polls: Poll[] } and Poll[] response shapes

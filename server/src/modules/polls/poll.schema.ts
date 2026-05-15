@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 
 // Option
-export interface IOption {
+interface IOption {
   _id: Types.ObjectId;
   text: string;
   order: number;
@@ -26,7 +26,7 @@ const optionSchema = new Schema<IOption>(
 );
 
 // Question
-export interface IQuestion {
+interface IQuestion {
   _id: Types.ObjectId;
   text: string;
   isRequired: boolean;
@@ -64,7 +64,7 @@ const questionSchema = new Schema<IQuestion>(
 );
 
 // Poll
-export type PollStatus = "active" | "expired" | "published";
+type PollStatus = "active" | "expired" | "published";
 
 export interface IPoll extends Document {
   _id: Types.ObjectId;

@@ -207,7 +207,7 @@ const QuestionCard = ({
                     ].join(" ")}
                   >
                     {isLeading && (
-                      <Crown className="mr-1.5 inline-block h-3.5 w-3.5 text-amber-500" />
+                      <Crown className="mr-1.5 inline-block h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
                     )}
                     {option.optionText}
                   </span>
@@ -441,7 +441,7 @@ export default function AnalyticsPage() {
               variant="outline"
               className={[
                 "gap-1 text-xs",
-                isConnected ? "border-green-200 text-green-600" : "text-muted-foreground",
+                isConnected ? "border-green-200 text-green-600 dark:border-green-800 dark:text-green-400" : "text-muted-foreground",
               ].join(" ")}
             >
               {isConnected ? (

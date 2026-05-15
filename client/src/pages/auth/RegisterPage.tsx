@@ -1,13 +1,14 @@
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { Eye, EyeOff, BarChart3, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -16,16 +17,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
+import { authApi } from "@/api/auth";
 import { useAuthStore } from "@/store/useAuthStore";
+import { getApiErrorMessage } from "@/lib/utils";
 import { authApi } from "@/api/auth";
 
 // Validation Schema 
@@ -74,13 +68,10 @@ export default function RegisterPage() {
       toast.success(`Account created! Welcome, ${response.data.user.name}!`);
       navigate(from, { replace: true });
     } catch (err) {
-      const error = err as { response?: { status?: number; data?: { error?: string } } };
-      const status = error.response?.status;
-      let message: string;
-      if (status === 409) message = "An account with this email already exists. Try logging in instead.";
-      else if (status === 429) message = "Too many attempts. Please wait a few minutes and try again.";
-      else message = error.response?.data?.error ?? "Registration failed. Please try again.";
-      toast.error(message);
+      const status = (err as { response?: { status?: number } }).response?.status;
+      if (status === 409) toast.error("An account with this email already exists. Try logging in instead.");
+      else if (status === 429) toast.error("Too many attempts. Please wait a few minutes and try again.");
+      else toast.error(getApiErrorMessage(err, "Registration failed. Please try again."));
     }
   };
 

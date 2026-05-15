@@ -23,7 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { cn } from "@/lib/utils";
+import { cn, getApiErrorMessage } from "@/lib/utils";
 
 import { pollsApi } from "@/api/polls";
 import type { Poll, ApiResponse } from "@/types";
@@ -303,12 +303,9 @@ export default function EditPollPage() {
       toast.success("Poll updated!");
       navigate("/dashboard");
     } catch (err) {
-      const error = err as { response?: { status?: number; data?: { error?: string } } };
-      const status = error.response?.status;
-      let message: string;
-      if (status === 403) message = "You don't have permission to edit this poll.";
-      else message = error.response?.data?.error ?? "Failed to update poll. Please try again.";
-      toast.error(message);
+      const status = (err as { response?: { status?: number } }).response?.status;
+      if (status === 403) toast.error("You don't have permission to edit this poll.");
+      else toast.error(getApiErrorMessage(err, "Failed to update poll. Please try again."));
     }
   };
 
