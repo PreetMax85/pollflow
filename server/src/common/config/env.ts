@@ -23,7 +23,7 @@ const envSchema = z.object({
   CLIENT_URL: z.string().url("CLIENT_URL must be a valid URL (e.g. https://pollflow.jdevs.codes)"),
 
   BCRYPT_SALT_ROUNDS: z.coerce.number().min(10, "BCRYPT_SALT_ROUNDS must be at least 10"),
-  RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required for email sending"),
+  RESEND_API_KEY: z.string().default(""),
 });
 
 // Parse throws a ZodError with a detailed message if validation fails.

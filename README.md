@@ -50,6 +50,24 @@ PollFlow allows users to:
 
 ---
 
+## Quick Start
+
+```bash
+# 1. Clone
+git clone https://github.com/PreetMax85/pollflow.git
+cd pollflow
+
+# 2. Backend
+cd server && cp .env.example .env  # fill in values
+npm install && npm run dev          # http://localhost:8080
+
+# 3. Frontend (new terminal)
+cd client && cp .env.example .env  # VITE_API_URL=http://localhost:8080
+npm install && npm run dev          # http://localhost:5173
+```
+
+**Prerequisites:** Node.js 20+, MongoDB Atlas URI (free tier works)
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -59,14 +77,18 @@ PollFlow allows users to:
 | Data fetching | TanStack Query v5 |
 | Forms | React Hook Form + Zod resolvers |
 | Charts | Recharts |
-| Real-time (client) | Socket.io-client |
+| Real-time (client) | Socket.io-client (reconnectionAttempts: 5) |
 | Backend | Node.js, Express 5, TypeScript (strict) |
 | Database | MongoDB Atlas (Mongoose ODM) |
-| Real-time (server) | Socket.io (poll rooms, typed events) |
+| Real-time (server) | Socket.io (poll rooms, typed events, connectionStateRecovery) |
 | Auth | JWT dual-token (access 15m / refresh 7d), httpOnly cookie, token blocklist |
 | Email | Resend (transactional emails — password reset) |
 | Validation | Zod (server + client) |
-| Fonts | Inter (body), DM Serif Display (headings) |
+| Fonts | Inter (body, weights 400–700), DM Serif Display (headings) — loaded from Google Fonts |
+| QR Code | qrcode (canvas-based, downloadable PNG output via `<a download>`) |
+| PNG Export | html2canvas (dynamic import, off-screen DOM capture) |
+| Dark mode | next-themes (class strategy, system default) |
+| Password hashing | bcryptjs |
 | Domains | pollflow.jdevs.codes (frontend), api.pollflow.jdevs.codes (backend) |
 | Deployment | Railway (Express) + Vercel (React) |
 
@@ -75,6 +97,41 @@ PollFlow allows users to:
 ## Backend
 
 ### Architecture
+
+```mermaid
+flowchart TD
+    Browser["🌐 Browser\nReact 19 + TypeScript + Vite"]
+
+    subgraph Frontend["Frontend — Vercel (pollflow.jdevs.codes)"]
+        Router["React Router v6\nProtectedRoute · PublicOnlyRoute"]
+        Pages["Pages\nLazy-loaded, code-split"]
+        State["State\nZustand (auth) · TanStack Query (server)"]
+        API["API Layer\nAxios + interceptor · plain axios (public)"]
+        WS["Socket.io-client\nuseSocket hook"]
+    end
+
+    subgraph Backend["Backend — Railway (api.pollflow.jdevs.codes)"]
+        Routes["Routes\nmiddleware chain"]
+        Controllers["Controllers\nasyncHandler wrapper"]
+        Services["Services\nbusiness logic"]
+        Repos["Repositories\nMongoose only"]
+        SocketServer["Socket.io Server\npoll rooms"]
+    end
+
+    DB[("MongoDB Atlas\nusers · polls\nresponses · blocklists")]
+    Email["Resend\ntransactional email"]
+
+    Browser --> Router
+    Router --> Pages
+    Pages --> State
+    Pages --> API
+    Pages --> WS
+    API -->|"HTTP Bearer token"| Routes
+    WS -->|"WebSocket"| SocketServer
+    Routes --> Controllers --> Services --> Repos --> DB
+    SocketServer --> Services
+    Services --> Email
+```
 
 The backend follows a strict **4-layer modular architecture**. Every module (auth, polls, responses, analytics) follows the same pattern — no exceptions:
 
@@ -111,7 +168,7 @@ pollflow/
 │       ├── store/                   # Zustand stores (auth token in memory)
 │       └── types/                   # Shared TypeScript interfaces
 │
-└── server/                          # Express API (deployed to Railway)
+    └── server/                          # Express API (deployed to Railway)
     └── src/
         ├── common/
         │   ├── config/
@@ -156,6 +213,9 @@ pollflow/
                 ├── analytics.service.ts       # MongoDB aggregation pipelines
                 ├── analytics.controller.ts
                 └── analytics.routes.ts
+
+        └── socket/
+            └── socket.ts        # Room init · typed events · emit helpers
 ```
 
 ---
@@ -173,44 +233,82 @@ pollflow/
 
 #### Collections
 
-**`users`**
-```
-_id, name, email (unique), password (bcrypt), resetToken?, resetTokenExpiresAt?, timestamps
+```mermaid
+erDiagram
+    USERS {
+        ObjectId _id PK
+        string name
+        string email "unique"
+        string password "bcrypt"
+        string resetToken "nullable"
+        date resetTokenExpiresAt "nullable"
+        date createdAt
+        date updatedAt
+    }
+
+    POLLS {
+        ObjectId _id PK
+        string title
+        string description "nullable"
+        ObjectId createdBy FK
+        boolean requiresAuth
+        boolean isAnonymous
+        string status "active|expired|published"
+        date expiresAt
+        date publishedAt "nullable"
+        number totalResponses "$inc atomic"
+        array questions "embedded"
+        date createdAt
+        date updatedAt
+    }
+
+    POLL_QUESTIONS {
+        ObjectId _id
+        string text
+        boolean isRequired
+        number order
+        array options "embedded"
+    }
+
+    POLL_OPTIONS {
+        ObjectId _id
+        string text
+        number order
+    }
+
+    RESPONSES {
+        ObjectId _id PK
+        ObjectId pollId FK
+        ObjectId respondentId FK "sparse nullable"
+        array answers "embedded"
+        boolean isAnonymous
+        string ipAddress "select:false"
+        date submittedAt
+        date createdAt
+    }
+
+    RESPONSE_ANSWERS {
+        ObjectId questionId
+        ObjectId optionId
+    }
+
+    TOKENBLOCKLISTS {
+        ObjectId _id PK
+        string jti "unique"
+        ObjectId userId
+        date expiresAt "TTL index"
+        date createdAt
+    }
+
+    USERS ||--o{ POLLS : "creates"
+    USERS ||--o{ RESPONSES : "submits"
+    POLLS ||--o{ RESPONSES : "receives"
+    POLLS ||--|| POLL_QUESTIONS : "embeds"
+    POLL_QUESTIONS ||--|| POLL_OPTIONS : "embeds"
+    RESPONSES ||--|| RESPONSE_ANSWERS : "embeds"
+    USERS ||--o{ TOKENBLOCKLISTS : "revokes"
 ```
 
-**`polls`**
-```
-_id, title, description?, createdBy (ref: User), requiresAuth, isAnonymous,
-status (active|expired|published), expiresAt, publishedAt?, totalResponses,
-questions: [{ _id, text, isRequired, order, options: [{ _id, text, order }] }],
-timestamps
-
-Indexes:
-  - createdBy: 1                     (get my polls)
-  - createdBy: 1, createdAt: -1      (my polls sorted newest first)
-  - status: 1, expiresAt: 1          (expiry sweep)
-```
-
-**`responses`**
-```
-_id, pollId (ref: Poll), respondentId? (ref: User, sparse),
-answers: [{ questionId, optionId }], isAnonymous, ipAddress (select: false),
-submittedAt, createdAt
-
-Indexes:
-  - pollId: 1                                         (all analytics queries)
-  - pollId: 1, respondentId: 1 (unique, sparse)       (duplicate prevention)
-  - pollId: 1, submittedAt: -1                        (timeline aggregation)
-```
-
-**`tokenblocklists`**
-```
-_id, jti (unique), userId, expiresAt, createdAt
-
-Indexes:
-  - jti: 1 (unique)           (O(1) revocation check on every request)
-  - expiresAt: 1 (TTL: 0)    (auto-deleted by MongoDB at expiry time)
-```
 
 #### Why a separate `responses` collection instead of embedding in polls?
 
@@ -223,6 +321,47 @@ The unique sparse compound index `{ pollId: 1, respondentId: 1 }` on the respons
 ---
 
 ### Authentication System
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant Z as Zustand
+    participant A as Axios Interceptor
+    participant S as Express Server
+    participant DB as MongoDB
+
+    Note over B,DB: Login
+    B->>S: POST /auth/login { email, password }
+    S->>DB: bcrypt.compare(password, hash)
+    S-->>B: { accessToken } + Set-Cookie: refreshToken (httpOnly)
+    B->>Z: setAuth(user, accessToken)
+
+    Note over B,DB: Every authenticated request
+    B->>A: API call
+    A->>S: Authorization: Bearer <accessToken>
+    S->>DB: TokenBlocklist.exists({ jti })
+    S-->>B: 200 OK
+
+    Note over B,DB: Silent restore on page load (bootstrapAuth)
+    B->>S: POST /auth/refresh (cookie auto-sent)
+    S->>DB: Verify refresh token jti not blocklisted
+    S-->>B: { accessToken } + new cookie
+    B->>Z: setAccessToken(newToken)
+
+    Note over B,DB: 401 → silent refresh (Axios interceptor)
+    B->>A: API call → 401
+    A->>S: POST /auth/refresh
+    S-->>A: { accessToken }
+    A->>Z: setAccessToken(newToken)
+    A->>S: Replay original request
+    S-->>B: 200 OK
+
+    Note over B,DB: Logout
+    B->>S: POST /auth/logout (requireAuth)
+    S->>DB: TokenBlocklist.insertOne({ jti, expiresAt })
+    S-->>B: 200 + Clear-Cookie
+    B->>Z: clearAuth()
+```
 
 PollFlow implements a **dual-token architecture** with full token lifecycle management:
 
@@ -384,6 +523,50 @@ POST /polls/:pollId/respond
   → emitAnalyticsUpdate(pollId, snapshot)     ← to poll:admin:{id} (full breakdown)
 ```
 
+```mermaid
+sequenceDiagram
+    participant R as Respondent Browser
+    participant C as Creator Browser
+    participant S as Express Server
+    participant IO as Socket.io
+    participant DB as MongoDB
+
+    Note over R,C: Setup — both join room on page load
+    R->>IO: emit join:poll (pollId)
+    IO-->>R: room:joined
+    C->>IO: emit join:poll (pollId)
+    IO-->>C: room:joined
+    C->>IO: emit join:poll:admin { pollId, token }
+    IO-->>C: room:joined (admin)
+
+    Note over R,DB: Response submitted
+    R->>S: POST /polls/:id/respond { answers }
+    S->>DB: responses.insertOne(...)
+    S->>DB: polls.$inc(totalResponses)
+    S-->>R: 200 OK
+
+    S->>IO: emitResponseCount(pollId, total)
+    IO-->>R: poll:response-count { total }
+    IO-->>C: poll:response-count { total }
+
+    S->>DB: $facet aggregation pipeline
+    S->>IO: emitAnalyticsUpdate(pollId, snapshot)
+    IO-->>C: poll:analytics-update { questions[], percentages }
+
+    Note over C,DB: Creator publishes results
+    C->>S: POST /polls/:id/publish
+    S->>DB: poll.status = "published"
+    S->>IO: emitPollPublished(pollId)
+    IO-->>R: poll:published → navigate to /results
+    IO-->>C: poll:published → update status badge
+
+    Note over R,C: Cleanup on navigate away
+    R->>IO: emit leave:poll (pollId)
+    C->>IO: emit leave:poll (pollId)
+```
+
+**Close & Publish flow:** If the poll is still `active`, clicking "Publish Results" first transitions it to `expired` via `POST /:pollId/close`, then immediately publishes via `POST /:pollId/publish`. A `localPublishRef` timestamp guard prevents duplicate success toasts when the socket's `poll:published` event fires back to the same creator.
+
 ### Analytics Pipeline
 
 Option percentages and per-question answer counts are computed inside MongoDB using `$facet`, `$group`, `$map`, and `$round`. A lightweight completion summary is assembled in Node.js using the pipeline's pre-aggregated counts — no raw response documents are loaded into memory.
@@ -412,6 +595,8 @@ Option percentages and per-question answer counts are computed inside MongoDB us
 
 The only JS-side processing after this: merging question/option text (stored in the poll document) with the ObjectId-keyed counts from the pipeline. This is unavoidable — text lives in the poll document, not in responses — but it's a single `Poll.findById` + an O(n) merge of at most `questions × options` entries.
 
+**Completion rate** is calculated using **required questions only**: `requiredAnswersAnswered ÷ (requiredQuestions × totalResponses)`. Optional questions are excluded from the denominator — skipping them is expected and does not reduce the rate.
+
 ---
 
 ### Security Measures
@@ -432,6 +617,8 @@ The only JS-side processing after this: merging question/option text (stored in 
 | Global error handler | Catches Zod validation errors, ApiError, and MongoServerError (E11000) — consistent `{ success, error }` shape |
 | asyncHandler wrapper | Eliminates duplicated try/catch in every controller — forwards errors to global handler |
 | optionalAuth middleware | Single response endpoint handles both anonymous guests and authenticated users without code duplication |
+| Graceful shutdown | SIGTERM/SIGINT closes HTTP server → Socket.io → MongoDB in order |
+| Unhandled rejection handler | `process.on("unhandledRejection")` — logs and prevents Node crash on rejected promises |
 
 ---
 
@@ -489,7 +676,7 @@ client/src/
 │   │   └── AppLayout.tsx      # Authenticated shell — navbar + <Outlet />
 │   ├── ui/                    # shadcn/ui components (auto-generated, untouched)
 │   ├── ResultsCard.tsx        # Off-screen card rendered for html2canvas PNG export
-│   └── QRCodeModal.tsx        # QR code generation dialog for poll sharing
+│   └── QRCodeModal.tsx        # QR code data URL generation + Download PNG button
 │
 ├── hooks/
 │   ├── useSocket.ts           # Socket.io room management + strict per-handler cleanup
@@ -497,7 +684,7 @@ client/src/
 │   └── useResultsCardExport.ts # html2canvas dynamic import + PNG download trigger
 │
 ├── lib/
-│   ├── utils.ts              # shadcn cn() helper
+│   ├── utils.ts              # cn() helper + getApiErrorMessage() parser
 │   └── bootstrapAuth.ts      # Silent token restore on page load
 │
 ├── pages/
@@ -721,7 +908,7 @@ The backend's `CLIENT_URL` env var locks CORS to the Vercel production origin �
 
 ## Known Limitations
 
-- **Railway free tier cold start:** The backend may take a few seconds to respond after inactivity (Railway sleeps free-tier services). The first request after a period of no traffic will be slow.
-- **Resend API key required for email delivery:** Forgot-password sends emails via Resend using `RESEND_API_KEY`. In development, set it in your `.env` to test real email. Without it, the reset link falls back to the console log (dev mode only). The sending domain must be verified in Resend's dashboard.
+- **Railway cold start:** The backend may take a few seconds to respond after a period of no traffic (Railway scales to zero on free-tier services after inactivity). The first request after idle time will be slow.
+- **Resend API key optional in development:** Forgot-password sends emails via Resend when `RESEND_API_KEY` is set. In development without it, the reset link is returned in the API response as `mockEmailContent` and displayed directly in the UI as a clickable link. The sending domain must be verified in Resend's dashboard for production email delivery.
 - **Poll editing is restricted:** Only `active` polls can be edited. Editing does not retroactively affect already-submitted responses.
 - **Anonymous duplicate prevention:** Authenticated polls use DB-level unique index for deduplication. Anonymous polls use IP-based rate limiting — not a hard guarantee against re-submission.
