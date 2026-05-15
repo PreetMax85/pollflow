@@ -185,6 +185,8 @@ const QuestionCard = ({
                     fontSize: 12,
                     borderRadius: 6,
                     border: "1px solid var(--border)",
+                    background: "var(--popover)",
+                    color: "var(--popover-foreground)",
                   }}
                 />
                 <Bar dataKey="count" fill="var(--primary)" radius={[3, 3, 0, 0]} />
@@ -671,6 +673,8 @@ export default function AnalyticsPage() {
                       fontSize: 12,
                       borderRadius: 6,
                       border: "1px solid var(--border)",
+                      background: "var(--popover)",
+                      color: "var(--popover-foreground)",
                     }}
                   />
                   <Line
