@@ -58,6 +58,7 @@ export default function AppLayout() {
     try {
       await apiClient.post("/auth/logout");
     } catch {
+      // Local logout proceeds even if server call fails
     } finally {
       clearAuth();
       toast.success("Logged out successfully");
