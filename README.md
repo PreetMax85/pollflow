@@ -594,7 +594,7 @@ The only JS-side processing after this: merging question/option text (stored in 
 | asyncHandler wrapper | Eliminates duplicated try/catch in every controller — forwards errors to global handler |
 | optionalAuth middleware | Single response endpoint handles both anonymous guests and authenticated users without code duplication |
 | Graceful shutdown | SIGTERM/SIGINT closes HTTP server → Socket.io → MongoDB in order |
-| Unhandled rejection handler | `process.on("unhandledRejection")` — logs and prevents Node crash on rejected promises |
+| Unhandled rejection handler | `process.on("unhandledRejection")` — logs unhandled rejections for visibility |
 
 ---
 
@@ -753,7 +753,7 @@ The poll creation form uses nested `useFieldArray` for dynamic questions and opt
 
 #### 7. Dark mode with next-themes
 
-The app uses `next-themes` with a `class`-based strategy and `system` default. Toggling between light and dark themes persists across page loads via the `prefers-color-scheme` media query. All shadcn/ui components use CSS variables (`--background`, `--foreground`, etc.) that switch between `oklch` color sets in light and dark `:root` blocks, so every component inherits the correct theme without prop drilling or context.
+The app uses `next-themes` with a `class`-based strategy and `system` default. The default follows the system's `prefers-color-scheme` media query; manual toggle selections are persisted by next-themes. All shadcn/ui components use CSS variables (`--background`, `--foreground`, etc.) that switch between `oklch` color sets in light and dark `:root` blocks, so every component inherits the correct theme without prop drilling or context.
 
 The theme toggle lives in the authenticated app shell (`AppLayout.tsx`) — a dropdown menu item switches between light and dark modes seamlessly.
 
