@@ -58,6 +58,8 @@ export interface AnalyticsSnapshot {
   totalResponses: number;
   questions: QuestionAnalytics[];
   dailyTimeline: { date: string; count: number }[];
+  anonymousCount: number;
+  identifiedCount: number;
 }
 
 let io: SocketServer<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;

@@ -231,7 +231,7 @@ export class AnalyticsService {
   static async getAnalyticsSnapshot(pollId: string): Promise<AnalyticsSnapshot> {
     const poll = await Poll.findById(pollId).select("questions totalResponses").lean();
 
-    if (!poll) return { totalResponses: 0, questions: [], dailyTimeline: [] };
+    if (!poll) return { totalResponses: 0, questions: [], dailyTimeline: [], anonymousCount: 0, identifiedCount: 0 };
 
     const pipeline: PipelineStage[] = [
       { $match: { pollId: new Types.ObjectId(pollId) } },
@@ -283,6 +283,9 @@ export class AnalyticsService {
             },
             { $project: { _id: 0, date: "$_id", count: 1 } },
             { $sort: { date: 1 } },
+          ],
+          anonymousBreakdown: [
+            { $group: { _id: "$isAnonymous", count: { $sum: 1 } } },
           ],
         },
       },
@@ -337,13 +340,16 @@ export class AnalyticsService {
     );
 
     const dailyTimeline: { date: string; count: number }[] = result?.dailyTimeline ?? [];
+    const anonymousBreakdown: AnonymousRow[] = result?.anonymousBreakdown ?? [];
+    const anonymousCount = anonymousBreakdown.find((b) => b._id === true)?.count ?? 0;
+    const identifiedCount = anonymousBreakdown.find((b) => b._id === false)?.count ?? 0;
     const questions = AnalyticsService.mergeQuestionData(
       poll.questions,
       answerBreakdown,
       questionTotalMap,
     );
 
-    return { totalResponses, questions, dailyTimeline };
+    return { totalResponses, questions, dailyTimeline, anonymousCount, identifiedCount };
   }
 
   /**

@@ -28,6 +28,8 @@ export interface AnalyticsUpdatePayload {
   totalResponses: number;
   questions: QuestionAnalytics[];
   dailyTimeline: { date: string; count: number }[];
+  anonymousCount: number;
+  identifiedCount: number;
   timestamp: string;
 }
 

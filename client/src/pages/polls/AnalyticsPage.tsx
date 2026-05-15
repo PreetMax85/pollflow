@@ -303,6 +303,8 @@ export default function AnalyticsPage() {
           questions,
           completionRate,
           dailyTimeline: payload.dailyTimeline,
+          anonymousCount: payload.anonymousCount,
+          identifiedCount: payload.identifiedCount,
         };
         if (pollId) queryClient.setQueryData(["analytics", pollId], updated);
         return updated;
