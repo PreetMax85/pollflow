@@ -243,9 +243,13 @@ export default function AnalyticsPage() {
     refetchOnWindowFocus: false,
   });
 
-  const [liveData, setLiveData] = useState<FullAnalytics | null>(initial ?? null);
+  const [liveData, setLiveData] = useState<FullAnalytics | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
 
+  useEffect(() => {
+    if (initial) setLiveData(initial);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+  }, [initial]);
   const localPublishRef = useRef(0);
 
   const analytics = liveData ?? initial ?? null;
