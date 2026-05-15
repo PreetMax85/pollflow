@@ -568,12 +568,21 @@ export default function AnalyticsPage() {
           description="in this poll"
         />
 
-        <StatCard
-          label="Anonymous"
-          value={analytics.anonymousCount}
-          icon={EyeOff}
-          description={`${analytics.identifiedCount} identified`}
-        />
+        {analytics.anonymousCount > 0 ? (
+          <StatCard
+            label="Anonymous"
+            value={analytics.anonymousCount}
+            icon={EyeOff}
+            description={`${analytics.identifiedCount} identified`}
+          />
+        ) : (
+          <StatCard
+            label="Identified"
+            value={analytics.identifiedCount}
+            icon={Eye}
+            description={`${analytics.anonymousCount} anonymous`}
+          />
+        )}
 
         <StatCard
           label="Status"
