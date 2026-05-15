@@ -74,24 +74,19 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 19, TypeScript (strict), Vite, Tailwind CSS v4, shadcn/ui |
-| State | Zustand (auth store, token in memory — never localStorage) |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, shadcn/ui |
+| State | Zustand |
 | Data fetching | TanStack Query v5 |
 | Forms | React Hook Form + Zod resolvers |
 | Charts | Recharts |
-| Real-time (client) | Socket.io-client (reconnectionAttempts: 5) |
-| Backend | Node.js, Express 5, TypeScript (strict) |
+| Real-time (client) | Socket.io-client |
+| Backend | Node.js, Express 5, TypeScript |
 | Database | MongoDB Atlas (Mongoose ODM) |
 | Real-time (server) | Socket.io (poll rooms, typed events, connectionStateRecovery) |
 | Auth | JWT dual-token (access 15m / refresh 7d), httpOnly cookie, token blocklist |
 | Email | Resend (transactional emails — password reset) |
 | Validation | Zod (server + client) |
-| Fonts | Inter (body, weights 400–700), DM Serif Display (headings) — loaded from Google Fonts |
-| QR Code | qrcode (canvas-based, downloadable PNG output via `<a download>`) |
-| PNG Export | html2canvas (dynamic import, off-screen DOM capture) |
-| Dark mode | next-themes (class strategy, system default) |
-| Password hashing | bcryptjs |
-| Domains | pollflow.jdevs.codes (frontend), api.pollflow.jdevs.codes (backend) |
+| Fonts | Inter, DM Serif Display|
 | Deployment | Railway (Express) + Vercel (React) |
 
 ---
