@@ -1,7 +1,7 @@
 import { apiClient } from "@/api/axios";
 import type { ApiResponse } from "@/types";
 
-// Types 
+// Types
 
 export interface Answer {
   questionId: string;

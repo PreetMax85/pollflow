@@ -1071,10 +1071,7 @@ export default function LandingPage() {
             >
               Inside PollFlow
             </p>
-            <h2
-              className="landing-heading text-4xl lg:text-5xl"
-              style={{ color: "#F0FDFA" }}
-            >
+            <h2 className="landing-heading text-4xl lg:text-5xl" style={{ color: "#F0FDFA" }}>
               Built for clarity, not complexity.
             </h2>
             <p className="mx-auto mt-3 max-w-md text-base" style={{ color: "#5EEAD4" }}>
@@ -1131,10 +1128,7 @@ export default function LandingPage() {
       >
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-10 text-center">
-            <h2
-              className="landing-heading text-3xl lg:text-4xl"
-              style={{ color: "#F0FDFA" }}
-            >
+            <h2 className="landing-heading text-3xl lg:text-4xl" style={{ color: "#F0FDFA" }}>
               Before PollFlow.
             </h2>
             <p className="mt-2 text-sm" style={{ color: "rgba(94,234,212,0.7)" }}>
@@ -1184,10 +1178,7 @@ export default function LandingPage() {
             >
               What people say
             </p>
-            <h2
-              className="landing-heading text-4xl lg:text-5xl"
-              style={{ color: "#F0FDFA" }}
-            >
+            <h2 className="landing-heading text-4xl lg:text-5xl" style={{ color: "#F0FDFA" }}>
               Real polls. Real results.
             </h2>
           </div>
@@ -1250,10 +1241,7 @@ export default function LandingPage() {
             >
               How it works
             </p>
-            <h2
-              className="landing-heading text-4xl lg:text-5xl"
-              style={{ color: "#F0FDFA" }}
-            >
+            <h2 className="landing-heading text-4xl lg:text-5xl" style={{ color: "#F0FDFA" }}>
               Four steps, two minutes.
             </h2>
           </div>
@@ -1303,10 +1291,7 @@ export default function LandingPage() {
             >
               Features
             </p>
-            <h2
-              className="landing-heading text-4xl lg:text-5xl"
-              style={{ color: "#F0FDFA" }}
-            >
+            <h2 className="landing-heading text-4xl lg:text-5xl" style={{ color: "#F0FDFA" }}>
               Everything you actually need.
             </h2>
             <p className="mx-auto mt-3 max-w-md text-base" style={{ color: "#5EEAD4" }}>
@@ -1324,10 +1309,7 @@ export default function LandingPage() {
       >
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-14 text-center">
-            <h2
-              className="landing-heading text-4xl lg:text-5xl"
-              style={{ color: "#F0FDFA" }}
-            >
+            <h2 className="landing-heading text-4xl lg:text-5xl" style={{ color: "#F0FDFA" }}>
               Who uses PollFlow?
             </h2>
           </div>

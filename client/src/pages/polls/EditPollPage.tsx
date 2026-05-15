@@ -1,18 +1,17 @@
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { useForm, useFieldArray, useFormContext } from "react-hook-form";
-import type { Control, ControllerRenderProps } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
+import type { ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { PlusCircle, Trash2, ArrowUp, ArrowDown, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -23,36 +22,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { cn, getApiErrorMessage } from "@/lib/utils";
+import { getApiErrorMessage } from "@/lib/utils";
 
 import { pollsApi } from "@/api/polls";
 import type { Poll, ApiResponse } from "@/types";
-
-// ToggleSwitch 
-
-function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full",
-        "border-2 border-transparent transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        checked ? "bg-primary" : "bg-input",
-      )}
-    >
-      <span
-        className={cn(
-          "pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg transition-transform",
-          checked ? "translate-x-5" : "translate-x-0",
-        )}
-      />
-    </button>
-  );
-}
 
 // Schema
 
@@ -65,7 +38,10 @@ const optionSchema = z.object({
 const questionSchema = z.object({
   text: z.string().min(3, "Question must be at least 3 characters").max(500),
   isRequired: z.boolean(),
-  options: z.array(optionSchema).min(2, "At least 2 options required").max(MAX_OPTIONS, "A question can have at most 6 options"),
+  options: z
+    .array(optionSchema)
+    .min(2, "At least 2 options required")
+    .max(MAX_OPTIONS, "A question can have at most 6 options"),
 });
 
 const editPollSchema = z.object({
@@ -81,178 +57,6 @@ const editPollSchema = z.object({
 });
 
 type EditPollFormValues = z.infer<typeof editPollSchema>;
-
-// Question Item
-
-interface QuestionItemProps {
-  questionIndex: number;
-  totalQuestions: number;
-  control: Control<EditPollFormValues, unknown, EditPollFormValues>;
-  onRemove: () => void;
-  canRemove: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-}
-
-function QuestionItem({ questionIndex, totalQuestions, control, onRemove, canRemove, onMoveUp, onMoveDown }: QuestionItemProps) {
-  const [collapsed, setCollapsed] = useState(false);
-
-  // useFormContext gives access to watch/setValue without prop-drilling
-  const { watch, setValue } = useFormContext<EditPollFormValues>();
-  const isRequired = watch(`questions.${questionIndex}.isRequired`);
-
-  const {
-    fields: optionFields,
-    append: appendOption,
-    remove: removeOption,
-  } = useFieldArray({ control, name: `questions.${questionIndex}.options` });
-
-  return (
-    <Card className="border-border">
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-1.5">
-          {/* Up/Down reorder */}
-          <div className="flex flex-col gap-0.5 shrink-0">
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="h-5 w-5"
-              onClick={onMoveUp}
-              disabled={questionIndex === 0}
-            >
-              <ArrowUp className="h-3 w-3" />
-            </Button>
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="h-5 w-5"
-              onClick={onMoveDown}
-              disabled={questionIndex === totalQuestions - 1}
-            >
-              <ArrowDown className="h-3 w-3" />
-            </Button>
-          </div>
-
-          <CardTitle className="text-sm font-medium flex-1">Question {questionIndex + 1}</CardTitle>
-
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7"
-            onClick={() => setCollapsed((v) => !v)}
-          >
-            {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          </Button>
-
-          {canRemove && (
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={onRemove}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-
-      {!collapsed && (
-        <CardContent className="space-y-4">
-          <FormField
-            control={control}
-            name={`questions.${questionIndex}.text`}
-            render={({
-              field,
-            }: {
-              field: ControllerRenderProps<EditPollFormValues, `questions.${number}.text`>;
-            }) => (
-              <FormItem>
-                <FormLabel className="text-xs">Question text</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. What is your favourite feature?" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Required toggle — plain ToggleSwitch via useFormContext */}
-          <div className="flex items-center justify-between rounded-md border px-3 py-2.5">
-            <div>
-              <p className="text-sm font-medium">Required</p>
-              <p className="text-xs text-muted-foreground">
-                {isRequired ? "Respondent must answer this" : "Respondent can skip this"}
-              </p>
-            </div>
-            <ToggleSwitch
-              checked={isRequired ?? true}
-              onChange={(val) =>
-                setValue(`questions.${questionIndex}.isRequired`, val, { shouldDirty: true })
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs">
-              Options <span className="text-muted-foreground">(min. 2, max. {MAX_OPTIONS})</span>
-            </Label>
-            {optionFields.map((optionField, optionIndex) => (
-              <FormField
-                key={optionField.id}
-                control={control}
-                name={`questions.${questionIndex}.options.${optionIndex}.text`}
-                render={({
-                  field,
-                }: {
-                  field: ControllerRenderProps<
-                    EditPollFormValues,
-                    `questions.${number}.options.${number}.text`
-                  >;
-                }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div className="flex gap-2">
-                        <Input placeholder={`Option ${optionIndex + 1}`} {...field} />
-                        {optionFields.length > 2 && (
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            className="shrink-0 text-muted-foreground hover:text-destructive"
-                            onClick={() => removeOption(optionIndex)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="w-full border-dashed"
-              onClick={() => appendOption({ text: "" })}
-              disabled={optionFields.length >= MAX_OPTIONS}
-            >
-              <PlusCircle className="h-3.5 w-3.5 mr-1.5" />
-              {optionFields.length >= MAX_OPTIONS ? `Max ${MAX_OPTIONS} options` : "Add option"}
-            </Button>
-          </div>
-        </CardContent>
-      )}
-    </Card>
-  );
-}
 
 // Page
 
@@ -289,7 +93,6 @@ export default function EditPollPage() {
     handleSubmit,
     reset,
     watch,
-    setValue,
     formState: { isSubmitting },
   } = form;
 
@@ -309,12 +112,7 @@ export default function EditPollPage() {
     });
   }, [poll, reset]);
 
-  const {
-    fields: questionFields,
-    append: appendQuestion,
-    remove: removeQuestion,
-    move: moveQuestion,
-  } = useFieldArray({ control, name: "questions" });
+  const { fields: questionFields } = useFieldArray({ control, name: "questions" });
 
   const onSubmit = async (values: EditPollFormValues) => {
     if (!pollId) return;
@@ -441,40 +239,39 @@ export default function EditPollPage() {
             </CardContent>
           </Card>
 
-          {/* Settings — ToggleSwitch with watch/setValue directly, no FormField needed */}
+          {/* Settings — read-only summary */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Settings</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Require sign-in to respond</Label>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-sm font-medium">Require sign-in to respond</p>
+                  <p className="text-xs text-muted-foreground">
                     Only authenticated users can submit responses
                   </p>
                 </div>
-                <ToggleSwitch
-                  checked={watch("requiresAuth")}
-                  onChange={(val) => setValue("requiresAuth", val, { shouldDirty: true })}
-                />
+                <Badge variant={watch("requiresAuth") ? "default" : "secondary"}>
+                  {watch("requiresAuth") ? "On" : "Off"}
+                </Badge>
               </div>
-              <Separator />
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Anonymous responses</Label>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Respondent identity is not stored
-                  </p>
+                  <p className="text-sm font-medium">Anonymous responses</p>
+                  <p className="text-xs text-muted-foreground">Respondent identity is not stored</p>
                 </div>
-                <ToggleSwitch
-                  checked={watch("isAnonymous")}
-                  onChange={(val) => setValue("isAnonymous", val, { shouldDirty: true })}
-                />
+                <Badge variant={watch("isAnonymous") ? "default" : "secondary"}>
+                  {watch("isAnonymous") ? "On" : "Off"}
+                </Badge>
               </div>
+              <p className="text-xs text-muted-foreground pt-1">
+                Settings are fixed at poll creation and cannot be changed.
+              </p>
             </CardContent>
           </Card>
 
+          {/* Questions — read-only summary */}
           <div className="space-y-3">
             <h2 className="landing-heading text-base">
               Questions{" "}
@@ -483,31 +280,29 @@ export default function EditPollPage() {
               </span>
             </h2>
             {questionFields.map((field, index) => (
-              <QuestionItem
-                key={field.id}
-                questionIndex={index}
-                totalQuestions={questionFields.length}
-                control={control}
-                onRemove={() => removeQuestion(index)}
-                canRemove={questionFields.length > 1}
-                onMoveUp={() => moveQuestion(index, index - 1)}
-                onMoveDown={() => moveQuestion(index, index + 1)}
-              />
+              <Card key={field.id} className="border-border">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {index + 1}. {field.text}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {field.isRequired ? "Required" : "Optional"} &middot; {field.options.length}{" "}
+                    options
+                  </p>
+                  <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-0.5">
+                    {field.options.map((opt, oi) => (
+                      <li key={oi}>{opt.text}</li>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
             ))}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-dashed"
-              onClick={() =>
-                appendQuestion({
-                  text: "",
-                  isRequired: true,
-                  options: [{ text: "" }, { text: "" }],
-                })
-              }
-            >
-              <PlusCircle className="h-4 w-4 mr-2" /> Add question
-            </Button>
+            <p className="text-xs text-muted-foreground">
+              Questions cannot be changed after the poll is created. To update questions, create a
+              new poll.
+            </p>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">

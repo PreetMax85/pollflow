@@ -243,12 +243,9 @@ export default function AnalyticsPage() {
     refetchOnWindowFocus: false,
   });
 
-  const [liveData, setLiveData] = useState<FullAnalytics | null>(null);
+  const [liveData, setLiveData] = useState<FullAnalytics | null>(initial ?? null);
   const [qrOpen, setQrOpen] = useState(false);
 
-  useEffect(() => {
-    if (initial) setLiveData(initial);
-  }, [initial]);
   const localPublishRef = useRef(0);
 
   const analytics = liveData ?? initial ?? null;
@@ -386,7 +383,8 @@ export default function AnalyticsPage() {
         return `Q${i + 1}: ${q.questionText}\n   → Leading: ${leading}`;
       }),
     ];
-    navigator.clipboard.writeText(lines.join("\n"))
+    navigator.clipboard
+      .writeText(lines.join("\n"))
       .then(() => toast.success("Results summary copied to clipboard!"))
       .catch(() => toast.error("Failed to copy summary"));
   }, [analytics, completionRate]);
@@ -432,16 +430,16 @@ export default function AnalyticsPage() {
               <ArrowLeft className="mr-1 h-4 w-4" /> Dashboard
             </Link>
           </Button>
-          <h1 className="landing-heading text-2xl">
-            {analytics.pollTitle}
-          </h1>
+          <h1 className="landing-heading text-2xl">{analytics.pollTitle}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <StatusBadge status={analytics.status} />
             <Badge
               variant="outline"
               className={[
                 "gap-1 text-xs",
-                isConnected ? "border-green-200 text-green-600 dark:border-green-800 dark:text-green-400" : "text-muted-foreground",
+                isConnected
+                  ? "border-green-200 text-green-600 dark:border-green-800 dark:text-green-400"
+                  : "text-muted-foreground",
               ].join(" ")}
             >
               {isConnected ? (
@@ -470,11 +468,16 @@ export default function AnalyticsPage() {
             Copy summary
           </Button>
 
-          <Button variant="outline" size="sm" onClick={() => {
-            navigator.clipboard.writeText(shareUrl)
-              .then(() => toast.success("Poll link copied!"))
-              .catch(() => toast.error("Failed to copy poll link"));
-          }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              navigator.clipboard
+                .writeText(shareUrl)
+                .then(() => toast.success("Poll link copied!"))
+                .catch(() => toast.error("Failed to copy poll link"));
+            }}
+          >
             Copy poll link
           </Button>
 
@@ -505,11 +508,16 @@ export default function AnalyticsPage() {
 
           {analytics.status === "published" && (
             <>
-              <Button variant="outline" size="sm" onClick={() => {
-                navigator.clipboard.writeText(resultsUrl)
-                  .then(() => toast.success("Results link copied!"))
-                  .catch(() => toast.error("Failed to copy results link"));
-              }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard
+                    .writeText(resultsUrl)
+                    .then(() => toast.success("Results link copied!"))
+                    .catch(() => toast.error("Failed to copy results link"));
+                }}
+              >
                 <Globe className="mr-2 h-4 w-4" /> Copy results link
               </Button>
               <Button
@@ -606,11 +614,15 @@ export default function AnalyticsPage() {
             <p className="mb-4 mt-1 text-sm text-muted-foreground">
               Share your poll link. This page updates live.
             </p>
-            <Button variant="outline" onClick={() => {
-              navigator.clipboard.writeText(shareUrl)
-                .then(() => toast.success("Poll link copied!"))
-                .catch(() => toast.error("Failed to copy poll link"));
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard
+                  .writeText(shareUrl)
+                  .then(() => toast.success("Poll link copied!"))
+                  .catch(() => toast.error("Failed to copy poll link"));
+              }}
+            >
               Copy poll link
             </Button>
           </CardContent>
@@ -651,7 +663,11 @@ export default function AnalyticsPage() {
                       })
                     }
                     formatter={(value: unknown) => [Number(value), "Responses"] as [number, string]}
-                    contentStyle={{ fontSize: 12, borderRadius: 6, border: "1px solid var(--border)" }}
+                    contentStyle={{
+                      fontSize: 12,
+                      borderRadius: 6,
+                      border: "1px solid var(--border)",
+                    }}
                   />
                   <Line
                     type="monotone"

@@ -38,8 +38,8 @@ export interface PollQuestion {
 }
 
 export interface Poll {
-  id: string; 
-  _id?: string; 
+  id: string;
+  _id?: string;
   title: string;
   description?: string;
   createdBy: string;
@@ -47,7 +47,7 @@ export interface Poll {
   requiresAuth: boolean;
   isAnonymous: boolean;
   status: PollStatus;
-  expiresAt: string; 
+  expiresAt: string;
   publishedAt?: string;
   totalResponses: number;
   createdAt: string;
@@ -73,7 +73,7 @@ export interface CreatePollInput {
   expiresAt: string;
 }
 
-// Analytics 
+// Analytics
 
 export interface OptionAnalytics {
   optionId: string;

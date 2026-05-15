@@ -76,7 +76,9 @@ export const ResultsCard = forwardRef<HTMLDivElement, ResultsCardProps>(({ data 
               <line x1="6" y1="20" x2="6" y2="14" />
             </svg>
           </div>
-          <span style={{ color: "#5EEAD4", fontSize: 13, fontWeight: 600, paddingBottom: "14px" }}>PollFlow</span>
+          <span style={{ color: "#5EEAD4", fontSize: 13, fontWeight: 600, paddingBottom: "14px" }}>
+            PollFlow
+          </span>
         </div>
 
         <div

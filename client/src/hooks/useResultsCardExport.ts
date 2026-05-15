@@ -20,7 +20,7 @@ export function useResultsCardExport(pollTitle: string) {
 
       const canvas = await html2canvas(cardRef.current, {
         backgroundColor: "#0A0F0F",
-        scale: 2, 
+        scale: 2,
         useCORS: true,
         logging: false,
         // Tell html2canvas to ignore elements we don't want captured

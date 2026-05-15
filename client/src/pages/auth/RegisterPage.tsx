@@ -8,7 +8,14 @@ import { BarChart3, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -21,7 +28,7 @@ import { authApi } from "@/api/auth";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getApiErrorMessage } from "@/lib/utils";
 
-// Validation Schema 
+// Validation Schema
 // Mirrors the backend registerSchema exactly — same regex, same messages.
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
@@ -68,8 +75,10 @@ export default function RegisterPage() {
       navigate(from, { replace: true });
     } catch (err) {
       const status = (err as { response?: { status?: number } }).response?.status;
-      if (status === 409) toast.error("An account with this email already exists. Try logging in instead.");
-      else if (status === 429) toast.error("Too many attempts. Please wait a few minutes and try again.");
+      if (status === 409)
+        toast.error("An account with this email already exists. Try logging in instead.");
+      else if (status === 429)
+        toast.error("Too many attempts. Please wait a few minutes and try again.");
       else toast.error(getApiErrorMessage(err, "Registration failed. Please try again."));
     }
   };

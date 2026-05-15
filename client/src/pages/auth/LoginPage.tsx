@@ -8,7 +8,14 @@ import { BarChart3, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -21,7 +28,7 @@ import { authApi } from "@/api/auth";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getApiErrorMessage } from "@/lib/utils";
 
-// Validation Schema 
+// Validation Schema
 // Mirrors the backend loginSchema exactly.
 
 const loginSchema = z.object({
@@ -58,7 +65,8 @@ export default function LoginPage() {
     } catch (err) {
       const status = (err as { response?: { status?: number } }).response?.status;
       if (status === 401) toast.error("Invalid email or password.");
-      else if (status === 429) toast.error("Too many attempts. Please wait a few minutes and try again.");
+      else if (status === 429)
+        toast.error("Too many attempts. Please wait a few minutes and try again.");
       else toast.error(getApiErrorMessage(err, "Login failed. Please try again."));
     }
   };

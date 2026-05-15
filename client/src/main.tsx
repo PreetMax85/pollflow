@@ -9,7 +9,7 @@ import { router } from "@/router";
 import { bootstrapAuth } from "@/lib/bootstrapAuth";
 import "./index.css";
 
-// Query Client 
+// Query Client
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +40,7 @@ function AppErrorFallback() {
   );
 }
 
-// Root 
+// Root
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("[main] #root element not found");
@@ -52,7 +52,12 @@ bootstrapAuth().finally(() => {
     <StrictMode>
       <ErrorBoundary FallbackComponent={AppErrorFallback}>
         <QueryClientProvider client={queryClient}>
-<ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <RouterProvider router={router} />
             <Toaster position="top-right" richColors closeButton />
           </ThemeProvider>

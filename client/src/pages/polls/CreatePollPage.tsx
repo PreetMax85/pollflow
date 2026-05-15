@@ -342,7 +342,10 @@ export default function CreatePollPage() {
       navigate(`/polls/${pollId}/analytics`);
     } catch (err) {
       const status = (err as { response?: { status?: number } }).response?.status;
-      if (status === 401) { navigate("/auth/login", { replace: true }); return; }
+      if (status === 401) {
+        navigate("/auth/login", { replace: true });
+        return;
+      }
       toast.error(getApiErrorMessage(err, "Failed to create poll. Please try again."));
     }
   };

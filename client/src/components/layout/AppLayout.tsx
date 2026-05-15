@@ -26,14 +26,14 @@ import {
 import { useAuthStore, selectUser } from "@/store/useAuthStore";
 import { apiClient } from "@/api/axios";
 
-//  Nav Links 
+//  Nav Links
 
 const NAV_LINKS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/polls/create", label: "Create Poll", icon: PlusCircle },
 ] as const;
 
-//  Helpers 
+//  Helpers
 
 /** Returns up-to-2-char initials from a display name. */
 const getInitials = (name: string): string =>
@@ -44,7 +44,7 @@ const getInitials = (name: string): string =>
     .join("")
     .toUpperCase();
 
-// Component 
+// Component
 
 export default function AppLayout() {
   const user = useAuthStore(selectUser);
@@ -66,7 +66,7 @@ export default function AppLayout() {
     }
   };
 
-  // Nav link class helper 
+  // Nav link class helper
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     [
       "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",

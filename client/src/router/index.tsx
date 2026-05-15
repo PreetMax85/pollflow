@@ -128,7 +128,7 @@ export const router = createBrowserRouter([
     ),
   },
 
-  // Protected: authenticated pages wrapped in AppLayout 
+  // Protected: authenticated pages wrapped in AppLayout
   {
     element: (
       <Suspense fallback={<PageLoader />}>

@@ -252,7 +252,7 @@ function PollCardSkeleton() {
   );
 }
 
-// Page 
+// Page
 
 export default function DashboardPage() {
   const user = useAuthStore(selectUser);
@@ -271,8 +271,7 @@ export default function DashboardPage() {
       toast.success("Poll deleted");
       setPollToDelete(null);
     },
-    onError: (err: unknown) =>
-      toast.error(getApiErrorMessage(err, "Failed to delete poll")),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to delete poll")),
   });
 
   const closeMutation = useMutation({
@@ -281,8 +280,7 @@ export default function DashboardPage() {
       void queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Poll closed");
     },
-    onError: (err: unknown) =>
-      toast.error(getApiErrorMessage(err, "Failed to close poll")),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to close poll")),
   });
 
   const publishMutation = useMutation({
@@ -291,8 +289,7 @@ export default function DashboardPage() {
       void queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Results published!");
     },
-    onError: (err: unknown) =>
-      toast.error(getApiErrorMessage(err, "Failed to publish results")),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to publish results")),
   });
 
   const duplicateMutation = useMutation({
@@ -301,8 +298,7 @@ export default function DashboardPage() {
       void queryClient.invalidateQueries({ queryKey: ["polls", "my"] });
       toast.success("Poll duplicated");
     },
-    onError: (err: unknown) =>
-      toast.error(getApiErrorMessage(err, "Failed to duplicate poll")),
+    onError: (err: unknown) => toast.error(getApiErrorMessage(err, "Failed to duplicate poll")),
   });
 
   // Defensive: handle both { polls: Poll[] } and Poll[] response shapes

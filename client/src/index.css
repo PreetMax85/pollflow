@@ -33,8 +33,8 @@
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: #0D9488;
-  --primary-foreground: #FFFFFF;
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.967 0.001 286.375);
@@ -45,7 +45,7 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
-  --ring: #0D9488;
+  --ring: #0d9488;
   --radius: 0.5rem;
 }
 
@@ -56,8 +56,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.141 0.005 285.823);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #0D9488;
-  --primary-foreground: #FFFFFF;
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.274 0.006 286.033);
@@ -72,17 +72,17 @@
 }
 
 .landing {
-  --landing-bg: #0A0F0F;
+  --landing-bg: #0a0f0f;
   --landing-surface: #111918;
-  --landing-primary: #0D9488;
-  --landing-accent: #F59E0B;
-  --landing-text: #F0FDFA;
-  --landing-muted: #5EEAD4;
-  font-family: 'Inter', sans-serif;
+  --landing-primary: #0d9488;
+  --landing-accent: #f59e0b;
+  --landing-text: #f0fdfa;
+  --landing-muted: #5eead4;
+  font-family: "Inter", sans-serif;
 }
 
 .landing-heading {
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: "DM Serif Display", Georgia, serif;
 }
 
 @layer base {
