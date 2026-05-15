@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { BarChart3, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -20,7 +20,6 @@ import {
 import { authApi } from "@/api/auth";
 import { useAuthStore } from "@/store/useAuthStore";
 import { getApiErrorMessage } from "@/lib/utils";
-import { authApi } from "@/api/auth";
 
 // Validation Schema 
 // Mirrors the backend registerSchema exactly — same regex, same messages.
