@@ -47,22 +47,22 @@ if (!rootElement) throw new Error("[main] #root element not found");
 
 const root = createRoot(rootElement);
 
-bootstrapAuth().finally(() => {
-  root.render(
-    <StrictMode>
-      <ErrorBoundary FallbackComponent={AppErrorFallback}>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <RouterProvider router={router} />
-            <Toaster position="top-right" richColors closeButton />
-          </ThemeProvider>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </StrictMode>,
-  );
-});
+root.render(
+  <StrictMode>
+    <ErrorBoundary FallbackComponent={AppErrorFallback}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <RouterProvider router={router} />
+          <Toaster position="top-right" richColors closeButton />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  </StrictMode>,
+);
+
+bootstrapAuth();
